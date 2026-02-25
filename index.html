@@ -32,43 +32,30 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Fix pour la carte Leaflet dans Tailwind */
+        /* Fix pour la carte Leaflet et suppression du fond blanc des marqueurs personnalisés */
         #map-container { z-index: 10; border-radius: 1rem; }
         .leaflet-container { font-family: 'Inter', sans-serif; }
+        .custom-leaflet-icon { background: transparent; border: none; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+        const { useState, useEffect } = React;
 
         // ==========================================
         // TON ESPACE ADMIN : BASE DE DONNÉES DES ZOOS
         // ==========================================
+        // Niveaux (level) : 4 (⭐⭐⭐⭐), 3 (⭐⭐⭐), 2 (⭐⭐), 1 (⭐)
         const zoosData = [
             {
                 id: 1,
-                name: "Zoo de la Tête d'Or",
-                city: "Lyon",
-                lat: 45.7786,
-                lng: 4.8532,
-                label: "⭐⭐",
-                color: "yellow",
-                summary: "Parc historique avec une gratuité d'accès, mais des installations inégales.",
-                analysis: "L'espace de la plaine africaine est vaste et bien conçu. Cependant, certains enclos historiques (notamment pour les primates) manquent de volume et d'enrichissement naturel. Des efforts sont notés sur la pédagogie.",
-                pros: ["Entrée gratuite (accès à l'information pour tous)", "Vaste plaine africaine", "Bonne présence vétérinaire"],
-                cons: ["Enclos des primates trop minéraux", "Forte affluence stressante"],
-                warning: "Critère d'espace non respecté pour certaines espèces forestières."
-            },
-            {
-                id: 2,
                 name: "Bioparc de Doué-la-Fontaine",
                 city: "Doué-en-Anjou",
-                lat: 47.1895,
-                lng: -0.2974,
-                label: "⭐⭐⭐",
-                color: "green",
+                lat: 47.1895, lng: -0.2974,
+                level: 4, 
+                stars: "⭐⭐⭐⭐",
                 summary: "Une référence européenne en matière d'immersion et de respect de l'habitat.",
                 analysis: "L'utilisation des carrières de faluns permet de créer des espaces immenses. Les animaux évoluent dans des environnements très proches de leur milieu naturel. Très forte implication dans la conservation in-situ (Projets Nature).",
                 pros: ["Immersion totale et naturelle", "Enclos parmi les plus vastes d'Europe", "Politique de conservation exemplaire"],
@@ -76,42 +63,55 @@
                 warning: null
             },
             {
+                id: 2,
+                name: "Réserve Africaine de Sigean",
+                city: "Sigean",
+                lat: 43.0645, lng: 2.9497,
+                level: 3,
+                stars: "⭐⭐⭐",
+                summary: "De vastes étendues offrant une semi-liberté très appréciable pour les herbivores.",
+                analysis: "Le format 'safari' permet d'offrir des centaines d'hectares aux troupeaux. Les comportements grégaires naturels sont parfaitement respectés. Les zones piétonnes sont plus classiques mais restent de bonne taille.",
+                pros: ["Espaces immenses pour la faune de plaine", "Cohabitation naturelle des espèces"],
+                cons: ["Trafic automobile parfois polluant dans la zone safari"],
+                warning: null
+            },
+            {
                 id: 3,
+                name: "Zoo de la Tête d'Or",
+                city: "Lyon",
+                lat: 45.7786, lng: 4.8532,
+                level: 2,
+                stars: "⭐⭐",
+                summary: "Parc historique avec une gratuité d'accès, mais des installations inégales.",
+                analysis: "L'espace de la plaine africaine est vaste et bien conçu. Cependant, certains enclos historiques manquent de volume et d'enrichissement naturel.",
+                pros: ["Entrée gratuite (pédagogie pour tous)", "Bonne présence vétérinaire"],
+                cons: ["Enclos des primates trop minéraux", "Forte affluence stressante"],
+                warning: "Bruit environnant de la ville pouvant gêner certaines espèces."
+            },
+            {
+                id: 4,
                 name: "Ménagerie du Jardin des Plantes",
                 city: "Paris",
-                lat: 48.8443,
-                lng: 2.3601,
-                label: "⭐",
-                color: "red",
+                lat: 48.8443, lng: 2.3601,
+                level: 1,
+                stars: "⭐",
                 summary: "Un zoo historique au cœur de Paris qui souffre d'un manque crucial d'espace.",
-                analysis: "Malgré l'importance historique et architecturale, l'espace disponible au cœur de la capitale est insuffisant pour répondre aux standards modernes du bien-être animal. Des efforts sont faits pour accueillir des espèces de plus petite taille.",
-                pros: ["Architecture historique classée", "Programmes d'élevage d'espèces menacées"],
-                cons: ["Taille des enclos dramatiquement petite", "Forte proximité avec le public", "Impossibilité d'extension"],
+                analysis: "Malgré l'importance historique et architecturale, l'espace disponible au cœur de la capitale est insuffisant pour répondre aux standards modernes du bien-être animal.",
+                pros: ["Architecture historique classée"],
+                cons: ["Taille des enclos dramatiquement petite", "Impossibilité d'extension matérielle"],
                 warning: "Alerte sur l'expression des comportements naturels due au manque d'espace."
             }
         ];
 
         // ==========================================
-        // DONNÉES DE LA GRILLE DE NOTATION
+        // DESIGN SYSTEM DES NIVEAUX (4 Labels)
         // ==========================================
-        const criteriaData = [
-            {
-                icon: "fa-maximize", title: "1. Espace et Habitat (40%)", color: "emerald",
-                details: "Taille des enclos, aménagement, zones de retrait hors de la vue du public."
-            },
-            {
-                icon: "fa-apple-whole", title: "2. Alimentation et Soins (30%)", color: "blue",
-                details: "Qualité de la nourriture, soins vétérinaires préventifs, hygiène."
-            },
-            {
-                icon: "fa-paw", title: "3. Comportement (15%)", color: "amber",
-                details: "Possibilité d'exprimer des comportements naturels, absence de stéréotypies."
-            },
-            {
-                icon: "fa-graduation-cap", title: "4. Pédagogie (15%)", color: "purple",
-                details: "Qualité des panneaux éducatifs, absence de spectacles dégradants, conservation."
-            }
-        ];
+        const levelConfig = {
+            4: { colorClass: "bg-emerald-600", textClass: "text-emerald-600", icon: "fa-award", title: "Excellence" },
+            3: { colorClass: "bg-lime-500", textClass: "text-lime-600", icon: "fa-check-double", title: "Très Favorable" },
+            2: { colorClass: "bg-amber-500", textClass: "text-amber-500", icon: "fa-scale-balanced", title: "Améliorable" },
+            1: { colorClass: "bg-red-500", textClass: "text-red-500", icon: "fa-triangle-exclamation", title: "Critique" }
+        };
 
         // ==========================================
         // COMPOSANTS COMMUNS
@@ -123,7 +123,7 @@
                         {[
                             { id: 'home', icon: 'fa-house', label: 'Accueil' },
                             { id: 'map', icon: 'fa-map-location-dot', label: 'La Carte' },
-                            { id: 'project', icon: 'fa-leaf', label: 'Le Projet RSE' },
+                            { id: 'project', icon: 'fa-leaf', label: 'Le Projet' },
                             { id: 'grid', icon: 'fa-clipboard-check', label: 'La Grille' }
                         ].map(tab => (
                             <button 
@@ -143,9 +143,7 @@
         const Modal = ({ zoo, onClose }) => {
             if (!zoo) return null;
             
-            const badgeColors = {
-                green: "bg-emerald-600", yellow: "bg-amber-500", red: "bg-red-500"
-            };
+            const theme = levelConfig[zoo.level];
 
             return (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in" onClick={onClose}>
@@ -153,16 +151,17 @@
                         
                         {/* Header de la Modal */}
                         <div className="bg-slate-900 p-8 text-white relative overflow-hidden">
-                            <div className="absolute top-0 right-0 p-32 bg-emerald-600 rounded-full blur-3xl opacity-20 -mr-16 -mt-16"></div>
+                            <div className={`absolute top-0 right-0 p-32 ${theme.colorClass} rounded-full blur-3xl opacity-20 -mr-16 -mt-16`}></div>
                             <button onClick={onClose} className="absolute top-6 right-6 text-slate-400 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center">
                                 <i className="fa-solid fa-xmark text-lg"></i>
                             </button>
                             <div className="relative z-10">
                                 <div className="flex items-center gap-3 mb-3">
-                                    <span className={`${badgeColors[zoo.color]} px-3 py-1 rounded-full text-xs font-bold tracking-wider shadow-sm`}>
+                                    <span className={`${theme.colorClass} px-3 py-1 rounded-full text-xs font-bold tracking-wider shadow-sm`}>
                                         {zoo.city}
                                     </span>
-                                    <span className="text-amber-400 text-lg tracking-widest">{zoo.label}</span>
+                                    <span className="text-amber-400 text-lg tracking-widest">{zoo.stars}</span>
+                                    <span className="text-white/60 text-xs uppercase font-bold ml-2">Label {theme.title}</span>
                                 </div>
                                 <h2 className="text-3xl font-bold mb-2">{zoo.name}</h2>
                                 <p className="text-slate-300 text-sm">{zoo.summary}</p>
@@ -205,7 +204,7 @@
                                 <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl flex items-start gap-4 mt-4">
                                     <i className="fa-solid fa-triangle-exclamation text-amber-500 text-xl mt-1"></i>
                                     <div>
-                                        <h4 className="font-bold text-amber-900 text-sm uppercase mb-1">Alerte Éthique</h4>
+                                        <h4 className="font-bold text-amber-900 text-sm uppercase mb-1">Point de vigilance</h4>
                                         <p className="text-sm text-amber-800">{zoo.warning}</p>
                                     </div>
                                 </div>
@@ -266,7 +265,7 @@
                                 <i className="fa-solid fa-clipboard-list"></i>
                             </div>
                             <h3 className="text-2xl font-bold text-slate-800 mb-3">La Grille</h3>
-                            <p className="text-slate-500 mb-6">Examinez nos critères d'évaluation scientifiques et objectifs utilisés pour attribuer nos labels.</p>
+                            <p className="text-slate-500 mb-6">Examinez les 4 niveaux de labels que nous attribuons lors de nos évaluations sur le terrain.</p>
                         </div>
                     </div>
                 </div>
@@ -282,60 +281,64 @@
                     attribution: '© OpenStreetMap'
                 }).addTo(map);
 
-                // Ajout des marqueurs depuis la base de données
+                // Ajout des marqueurs avec le design personnalisé HTML/Tailwind
                 zoosData.forEach(zoo => {
-                    const marker = L.marker([zoo.lat, zoo.lng]).addTo(map);
-                    // Création du bouton dans la bulle
+                    const theme = levelConfig[zoo.level];
+                    
+                    // Création d'une icône HTML (Un beau cercle coloré avec l'icône correspondante)
+                    const customIcon = L.divIcon({
+                        className: 'custom-leaflet-icon',
+                        html: `
+                            <div class="relative flex items-center justify-center w-12 h-12">
+                                <div class="${theme.colorClass} w-10 h-10 rounded-full flex items-center justify-center text-white shadow-[0_5px_15px_rgba(0,0,0,0.3)] border-2 border-white hover:scale-110 transition-transform cursor-pointer">
+                                    <i class="fa-solid ${theme.icon} text-lg"></i>
+                                </div>
+                            </div>
+                        `,
+                        iconSize: [48, 48],
+                        iconAnchor: [24, 24], // Centré
+                        popupAnchor: [0, -20] // La bulle s'ouvre juste au dessus
+                    });
+
+                    const marker = L.marker([zoo.lat, zoo.lng], { icon: customIcon }).addTo(map);
+                    
+                    // Création du contenu de la bulle Leaflet
                     const popupContent = document.createElement('div');
+                    popupContent.className = "text-center p-1";
                     popupContent.innerHTML = `
-                        <div class="font-bold text-slate-800 mb-1">${zoo.name}</div>
-                        <div class="text-amber-500 mb-2">${zoo.label}</div>
-                        <button class="bg-emerald-600 text-white px-3 py-1 rounded text-xs hover:bg-emerald-700 w-full">Voir l'audit</button>
+                        <div class="font-bold text-slate-800 mb-1 text-sm">${zoo.name}</div>
+                        <div class="text-amber-500 mb-3 tracking-widest text-xs">${zoo.stars}</div>
+                        <button class="${theme.colorClass} text-white px-4 py-1.5 rounded-full text-xs font-bold w-full shadow-sm hover:opacity-90 transition-opacity">
+                            Voir l'audit
+                        </button>
                     `;
-                    // Associer l'événement React au bouton Leaflet
+                    
+                    // On connecte le bouton à la fonction React pour ouvrir la modale
                     popupContent.querySelector('button').onclick = () => setSelectedZoo(zoo);
                     
                     marker.bindPopup(popupContent);
                 });
 
-                // Nettoyage lors du changement d'onglet
                 return () => map.remove();
             }, []);
 
             return (
                 <div className="animate-fade-in max-w-6xl mx-auto px-4 py-12">
                     <div className="text-center mb-10">
-                        <h2 className="text-3xl font-bold text-slate-800 mb-4">Carte des Parcs Zoologiques</h2>
-                        <p className="text-slate-500 max-w-2xl mx-auto">Cliquez sur les marqueurs pour consulter les notes de bien-être animal attribuées par notre comité d'éthique.</p>
+                        <h2 className="text-3xl font-bold text-slate-800 mb-4">Carte des Parcs Évalués</h2>
+                        <p className="text-slate-500 max-w-2xl mx-auto mb-8">Cliquez sur les bulles pour consulter la note (sur 4 niveaux) attribuée par notre comité.</p>
+                        
+                        {/* Légende rapide sous le titre */}
+                        <div className="flex flex-wrap justify-center gap-4 text-xs font-bold">
+                            <span className="flex items-center gap-2 px-3 py-1 bg-white rounded-full shadow-sm border border-slate-100"><span className="w-3 h-3 rounded-full bg-emerald-600"></span> 4 - Excellence</span>
+                            <span className="flex items-center gap-2 px-3 py-1 bg-white rounded-full shadow-sm border border-slate-100"><span className="w-3 h-3 rounded-full bg-lime-500"></span> 3 - Très Favorable</span>
+                            <span className="flex items-center gap-2 px-3 py-1 bg-white rounded-full shadow-sm border border-slate-100"><span className="w-3 h-3 rounded-full bg-amber-500"></span> 2 - Améliorable</span>
+                            <span className="flex items-center gap-2 px-3 py-1 bg-white rounded-full shadow-sm border border-slate-100"><span className="w-3 h-3 rounded-full bg-red-500"></span> 1 - Critique</span>
+                        </div>
                     </div>
 
-                    <div className="bg-white p-2 md:p-4 rounded-2xl shadow-lg border border-slate-200 mb-12">
-                        {/* La carte Leaflet s'affichera ici */}
-                        <div id="map-container" className="w-full h-[500px] z-10"></div>
-                    </div>
-
-                    <div className="bg-emerald-50 rounded-2xl p-8 border border-emerald-100 flex flex-col md:flex-row gap-8 items-center shadow-sm">
-                        <div className="flex-1">
-                            <h3 className="text-2xl font-bold text-emerald-900 mb-3"><i className="fa-solid fa-bullhorn mr-2"></i> Proposer un parc</h3>
-                            <p className="text-emerald-800 text-sm leading-relaxed mb-4">
-                                Un zoo manque à notre carte ? En tant que démarche participative, nous acceptons les suggestions du public pour nos prochaines campagnes d'évaluation.
-                            </p>
-                        </div>
-                        <div className="flex-1 w-full bg-white p-6 rounded-xl shadow-sm border border-emerald-100">
-                            <form action="mailto:contact@voix-animale.fr" method="post" enctype="text/plain" className="flex flex-col gap-4">
-                                <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase">Nom du parc</label>
-                                    <input type="text" name="Zoo" className="w-full border border-slate-200 rounded p-2 mt-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none" required />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase">Pourquoi l'évaluer ?</label>
-                                    <textarea name="Raison" rows="2" className="w-full border border-slate-200 rounded p-2 mt-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none"></textarea>
-                                </div>
-                                <button type="submit" className="bg-emerald-600 text-white font-bold py-3 rounded hover:bg-emerald-700 transition-colors">
-                                    Envoyer la suggestion
-                                </button>
-                            </form>
-                        </div>
+                    <div className="bg-white p-2 md:p-4 rounded-3xl shadow-xl border border-slate-200 mb-12">
+                        <div id="map-container" className="w-full h-[600px] z-10"></div>
                     </div>
                 </div>
             );
@@ -370,47 +373,58 @@
         );
 
         const GridPage = () => (
-            <div className="animate-fade-in max-w-6xl mx-auto px-4 py-12">
+            <div className="animate-fade-in max-w-5xl mx-auto px-4 py-12">
                 <div className="text-center mb-12">
-                    <h2 className="text-3xl font-bold text-slate-800 mb-4">Notre Grille de Notation</h2>
-                    <p className="text-slate-500 max-w-2xl mx-auto">Chaque évaluation est menée selon une grille d'audit stricte. Les points obtenus définissent le niveau d'excellence du parc.</p>
+                    <h2 className="text-3xl font-bold text-slate-800 mb-4">La Grille de Notation & Les 4 Labels</h2>
+                    <p className="text-slate-500 max-w-2xl mx-auto">
+                        Notre grille de critères complète (Espace, Soins, Comportement, Pédagogie) sera détaillée prochainement sur cette page. En attendant, voici les 4 niveaux de labels que nous attribuons à l'issue de nos audits :
+                    </p>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-6 mb-16">
-                    {criteriaData.map((crit, idx) => (
-                        <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex gap-4 hover:shadow-md transition-shadow">
-                            <div className={`w-12 h-12 flex-shrink-0 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-xl`}>
-                                <i className={`fa-solid ${crit.icon}`}></i>
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-lg text-slate-800 mb-2">{crit.title}</h3>
-                                <p className="text-sm text-slate-500">{crit.details}</p>
-                            </div>
+                <div className="grid md:grid-cols-2 gap-6">
+                    {/* Niveau 4 */}
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-8 border-l-emerald-600 hover:shadow-md transition-shadow">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="text-emerald-600 text-2xl"><i className="fa-solid fa-award"></i></div>
+                            <h3 className="font-bold text-xl text-slate-800">Niveau 4 : Excellence</h3>
                         </div>
-                    ))}
-                </div>
-
-                <div className="bg-slate-900 text-white rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-32 bg-amber-500 rounded-full blur-3xl opacity-10"></div>
-                    <h3 className="text-2xl font-bold mb-8 relative z-10 text-center">Niveaux de Label Attribués</h3>
-                    
-                    <div className="grid md:grid-cols-3 gap-6 relative z-10">
-                        <div className="bg-white/10 backdrop-blur border border-white/20 p-6 rounded-xl text-center">
-                            <div className="text-amber-400 text-2xl mb-3">⭐⭐⭐</div>
-                            <h4 className="font-bold text-white mb-2">Excellence</h4>
-                            <p className="text-sm text-slate-300">Le bien-être est absolu. Les standards dépassent la législation en vigueur.</p>
-                        </div>
-                        <div className="bg-white/10 backdrop-blur border border-white/20 p-6 rounded-xl text-center">
-                            <div className="text-amber-400 text-2xl mb-3">⭐⭐</div>
-                            <h4 className="font-bold text-white mb-2">Bon / En progrès</h4>
-                            <p className="text-sm text-slate-300">Des efforts réels sont visibles, mais certaines installations nécessitent d'être modernisées.</p>
-                        </div>
-                        <div className="bg-white/10 backdrop-blur border border-white/20 p-6 rounded-xl text-center">
-                            <div className="text-amber-400 text-2xl mb-3">⭐</div>
-                            <h4 className="font-bold text-white mb-2">Insuffisant</h4>
-                            <p className="text-sm text-slate-300">Critères fondamentaux non respectés pour plusieurs espèces. Refonte nécessaire.</p>
-                        </div>
+                        <div className="text-amber-400 mb-3 tracking-widest">⭐⭐⭐⭐</div>
+                        <p className="text-slate-600 text-sm">Le bien-être animal est la priorité absolue. Les espaces sont immenses, les comportements naturels sont totalement respectés. Les standards dépassent largement la législation en vigueur.</p>
                     </div>
+
+                    {/* Niveau 3 */}
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-8 border-l-lime-500 hover:shadow-md transition-shadow">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="text-lime-500 text-2xl"><i className="fa-solid fa-check-double"></i></div>
+                            <h3 className="font-bold text-xl text-slate-800">Niveau 3 : Très Favorable</h3>
+                        </div>
+                        <div className="text-amber-400 mb-3 tracking-widest">⭐⭐⭐</div>
+                        <p className="text-slate-600 text-sm">Le parc offre d'excellentes conditions de vie pour la grande majorité des espèces. De gros efforts de conservation sont menés. Quelques détails mineurs peuvent encore être optimisés.</p>
+                    </div>
+
+                    {/* Niveau 2 */}
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-8 border-l-amber-500 hover:shadow-md transition-shadow">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="text-amber-500 text-2xl"><i className="fa-solid fa-scale-balanced"></i></div>
+                            <h3 className="font-bold text-xl text-slate-800">Niveau 2 : Améliorable</h3>
+                        </div>
+                        <div className="text-amber-400 mb-3 tracking-widest">⭐⭐</div>
+                        <p className="text-slate-600 text-sm">Des efforts réels sont visibles (soins vétérinaires, nourriture), mais de nombreuses installations historiques sont trop petites ou inadaptées. Une modernisation est nécessaire pour certaines espèces.</p>
+                    </div>
+
+                    {/* Niveau 1 */}
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-8 border-l-red-500 hover:shadow-md transition-shadow">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="text-red-500 text-2xl"><i className="fa-solid fa-triangle-exclamation"></i></div>
+                            <h3 className="font-bold text-xl text-slate-800">Niveau 1 : Critique</h3>
+                        </div>
+                        <div className="text-amber-400 mb-3 tracking-widest">⭐</div>
+                        <p className="text-slate-600 text-sm">Les critères fondamentaux de bien-être ne sont pas respectés pour plusieurs espèces (manque d'espace critique, absence d'enrichissement, stress visible). Une refonte totale est urgente.</p>
+                    </div>
+                </div>
+                
+                <div className="mt-12 p-6 bg-slate-100 rounded-xl text-center border border-slate-200 border-dashed">
+                    <p className="text-slate-500 font-medium"><i className="fa-solid fa-hourglass-half mr-2"></i> Le détail point par point de notre grille d'évaluation scientifique sera publié ici prochainement.</p>
                 </div>
             </div>
         );
@@ -433,14 +447,13 @@
                         {activeTab === 'grid' && <GridPage />}
                     </main>
 
-                    <footer className="bg-slate-900 text-slate-400 py-8 text-center border-t border-slate-800">
+                    <footer className="bg-slate-900 text-slate-400 py-8 text-center border-t border-slate-800 mt-12">
                         <div className="max-w-4xl mx-auto px-4">
                             <p className="font-bold text-emerald-500 mb-2"><i className="fa-solid fa-paw mr-2"></i>Label Voix Animale</p>
                             <p className="text-sm">Projet Étudiant RSE © 2026. Fait avec passion pour la cause animale.</p>
                         </div>
                     </footer>
                     
-                    {/* Fenêtre modale qui s'ouvre quand on clique sur un zoo */}
                     <Modal zoo={selectedZoo} onClose={() => setSelectedZoo(null)} />
                 </div>
             );
