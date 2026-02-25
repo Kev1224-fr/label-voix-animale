@@ -3,324 +3,451 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Label Voix Animale</title>
+    <title>Label Voix Animale - Projet RSE</title>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
-    <style>
-        /* =========================================
-           STYLES (CSS) - Le design du site
-           ========================================= */
-        :root {
-            --primary: #2e7d32; /* Vert nature principal */
-            --secondary: #f9a825; /* Jaune/Orange pour les étoiles */
-            --bg-color: #f4f7f6;
-            --text-color: #333;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-        }
-
-        header {
-            background-color: var(--primary);
-            color: white;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        header h1 { margin: 0; font-size: 1.5rem; }
-
-        nav ul {
-            list-style: none;
-            display: flex;
-            gap: 1.5rem;
-            margin: 0;
-            padding: 0;
-        }
-
-        nav button {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            transition: background 0.3s;
-        }
-
-        nav button:hover, nav button.active {
-            background-color: rgba(255,255,255,0.2);
-        }
-
-        main {
-            max-width: 1000px;
-            margin: 2rem auto;
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.05);
-        }
-
-        /* Gestion des onglets */
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.5s; }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* Carte */
-        #map {
-            height: 500px;
-            width: 100%;
-            border-radius: 8px;
-            border: 2px solid #ddd;
-            margin-bottom: 2rem;
-            z-index: 1; /* Reste sous la navigation */
-        }
-
-        /* Formulaire de proposition */
-        .suggestion-box {
-            background-color: #e8f5e9;
-            padding: 1.5rem;
-            border-radius: 8px;
-            border-left: 5px solid var(--primary);
-        }
-
-        form { display: flex; flex-direction: column; gap: 1rem; }
-        input, textarea {
-            padding: 0.8rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-family: inherit;
-        }
-        button.submit-btn {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 1rem;
-            font-size: 1rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        button.submit-btn:hover { background-color: #1b5e20; }
-
-        /* Fenêtre Modale (Détail du zoo) */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-content {
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            max-width: 600px;
-            width: 90%;
-            position: relative;
-        }
-        .close-btn {
-            position: absolute;
-            top: 10px; right: 15px;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: #888;
-        }
-        .close-btn:hover { color: red; }
-        .label-stars { color: var(--secondary); font-size: 1.2rem; }
-        
-        footer {
-            text-align: center;
-            padding: 2rem;
-            color: #666;
-            font-size: 0.9rem;
-        }
-    </style>
-</head>
-<body>
-
-    <header>
-        <h1>🐾 Label Voix Animale</h1>
-        <nav>
-            <ul>
-                <li><button onclick="openTab('carte')" class="active" id="btn-carte">La Carte</button></li>
-                <li><button onclick="openTab('projet')" id="btn-projet">Notre Projet</button></li>
-                <li><button onclick="openTab('grille')" id="btn-grille">Grille de Notation</button></li>
-            </ul>
-        </nav>
-    </header>
-
-    <main>
-        <section id="carte" class="tab-content active">
-            <h2>Carte des Zoos Évalués</h2>
-            <p>Découvrez notre évaluation du bien-être animal dans les différents parcs zoologiques de France. Cliquez sur un marqueur pour voir les détails.</p>
-            
-            <div id="map"></div>
-
-            <div class="suggestion-box">
-                <h3>Proposer un zoo à évaluer</h3>
-                <p>Un parc manque à l'appel ? Dites-le nous !</p>
-                <form action="mailto:votre.email.etudiant@ecole.fr" method="post" enctype="text/plain">
-                    <input type="text" name="Nom_du_Zoo" placeholder="Nom du zoo" required>
-                    <input type="text" name="Ville" placeholder="Ville ou Région" required>
-                    <textarea name="Pourquoi" rows="3" placeholder="Pourquoi devrions-nous évaluer ce parc ?"></textarea>
-                    <button type="submit" class="submit-btn">Envoyer la proposition (Ouvre votre messagerie)</button>
-                </form>
-            </div>
-        </section>
-
-        <section id="projet" class="tab-content">
-            <h2>À propos du projet "Label Voix Animale"</h2>
-            <p>Bienvenue sur notre plateforme. Nous sommes un groupe d'étudiants engagés dans la Responsabilité Sociétale des Entreprises (RSE).</p>
-            <h3>Notre mission</h3>
-            <p>Notre but est de promouvoir le bien-être animal en évaluant de manière transparente les parcs zoologiques. Nous croyons qu'une information claire permet aux visiteurs de faire des choix éclairés et pousse les structures à améliorer les conditions de vie de leurs pensionnaires.</p>
-            <h3>Comment nous procédons ?</h3>
-            <p>Nous utilisons une grille de notation stricte et objective, basée sur les standards internationaux de la conservation et de l'éthologie.</p>
-        </section>
-
-        <section id="grille" class="tab-content">
-            <h2>Notre Grille de Notation</h2>
-            <p>Voici les critères sur lesquels nous basons notre Label. Chaque critère rapporte des points, définissant le niveau final d'étoiles.</p>
-            <ul>
-                <li><strong>Espace et Habitat (40%) :</strong> Taille des enclos, enrichissement naturel, zones de retrait pour les animaux.</li>
-                <li><strong>Alimentation et Soins (30%) :</strong> Qualité de la nourriture, présence vétérinaire, soins préventifs.</li>
-                <li><strong>Comportement (15%) :</strong> Possibilité d'exprimer des comportements naturels (gratter, grimper, nager), absence de stéréotypies.</li>
-                <li><strong>Pédagogie et Conservation (15%) :</strong> Programmes de réintroduction, panneaux éducatifs (sans spectacles dégradants).</li>
-            </ul>
-            <p><strong>Niveaux de Label :</strong><br>
-                ⭐⭐⭐ : Excellence (Le bien-être est une priorité absolue).<br>
-                ⭐⭐ : Bon (Des efforts réels, mais des améliorations possibles).<br>
-                ⭐ : Insuffisant (Critères de base non respectés pour plusieurs espèces).
-            </p>
-        </section>
-    </main>
-
-    <div id="zoo-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
-            <h2 id="modal-nom">Nom du Zoo</h2>
-            <div class="label-stars" id="modal-label">⭐⭐⭐</div>
-            <p><strong>Ville :</strong> <span id="modal-ville">Ville</span></p>
-            <hr>
-            <h3>Détail de l'évaluation :</h3>
-            <p id="modal-details">Détails ici...</p>
-        </div>
-    </div>
-
-    <footer>
-        <p>&copy; 2026 Projet Étudiant RSE - Label Voix Animale. Fait avec ❤️ pour les animaux.</p>
-    </footer>
-
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <script>
-        // --- 1. TON ESPACE ADMIN : AJOUTE TES ZOOS ICI ---
-        // C'est ici que tu ajoutes, modifies ou supprimes tes évaluations.
-        // Copie-colle un bloc { ... } pour ajouter un nouveau zoo.
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
         
-        const baseDeDonneesZoos = [
+        /* Barres de défilement personnalisées */
+        .custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        
+        /* Animations */
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Fix pour la carte Leaflet dans Tailwind */
+        #map-container { z-index: 10; border-radius: 1rem; }
+        .leaflet-container { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // ==========================================
+        // TON ESPACE ADMIN : BASE DE DONNÉES DES ZOOS
+        // ==========================================
+        const zoosData = [
             {
-                nom: "Zoo de la Tête d'Or",
-                ville: "Lyon",
-                lat: 45.7786,  // Latitude (Trouvable sur Google Maps)
-                lng: 4.8532,   // Longitude
+                id: 1,
+                name: "Zoo de la Tête d'Or",
+                city: "Lyon",
+                lat: 45.7786,
+                lng: 4.8532,
                 label: "⭐⭐",
-                details: "Entrée gratuite et parc historique. Bon espace pour les girafes, mais certains enclos pour les primates nécessiteraient davantage d'enrichissement naturel. Efforts notés sur la conservation."
+                color: "yellow",
+                summary: "Parc historique avec une gratuité d'accès, mais des installations inégales.",
+                analysis: "L'espace de la plaine africaine est vaste et bien conçu. Cependant, certains enclos historiques (notamment pour les primates) manquent de volume et d'enrichissement naturel. Des efforts sont notés sur la pédagogie.",
+                pros: ["Entrée gratuite (accès à l'information pour tous)", "Vaste plaine africaine", "Bonne présence vétérinaire"],
+                cons: ["Enclos des primates trop minéraux", "Forte affluence stressante"],
+                warning: "Critère d'espace non respecté pour certaines espèces forestières."
             },
             {
-                nom: "Bioparc de Doué-la-Fontaine",
-                ville: "Doué-en-Anjou",
+                id: 2,
+                name: "Bioparc de Doué-la-Fontaine",
+                city: "Doué-en-Anjou",
                 lat: 47.1895,
                 lng: -0.2974,
                 label: "⭐⭐⭐",
-                details: "Excellente gestion de l'espace avec des carrières de faluns immenses. Les animaux évoluent dans des environnements très proches de leur milieu naturel. Très forte implication dans la conservation in-situ."
+                color: "green",
+                summary: "Une référence européenne en matière d'immersion et de respect de l'habitat.",
+                analysis: "L'utilisation des carrières de faluns permet de créer des espaces immenses. Les animaux évoluent dans des environnements très proches de leur milieu naturel. Très forte implication dans la conservation in-situ (Projets Nature).",
+                pros: ["Immersion totale et naturelle", "Enclos parmi les plus vastes d'Europe", "Politique de conservation exemplaire"],
+                cons: ["Certaines zones très escarpées pour le public"],
+                warning: null
             },
             {
-                nom: "Parc Zoologique de Paris",
-                ville: "Paris",
-                lat: 48.8318,
-                lng: 2.4173,
-                label: "⭐⭐",
-                details: "Rénovation complète réussie offrant de vastes biozones. Soins vétérinaires excellents. Cependant, la cohabitation de certaines espèces dans des espaces restreints fait perdre quelques points."
+                id: 3,
+                name: "Ménagerie du Jardin des Plantes",
+                city: "Paris",
+                lat: 48.8443,
+                lng: 2.3601,
+                label: "⭐",
+                color: "red",
+                summary: "Un zoo historique au cœur de Paris qui souffre d'un manque crucial d'espace.",
+                analysis: "Malgré l'importance historique et architecturale, l'espace disponible au cœur de la capitale est insuffisant pour répondre aux standards modernes du bien-être animal. Des efforts sont faits pour accueillir des espèces de plus petite taille.",
+                pros: ["Architecture historique classée", "Programmes d'élevage d'espèces menacées"],
+                cons: ["Taille des enclos dramatiquement petite", "Forte proximité avec le public", "Impossibilité d'extension"],
+                warning: "Alerte sur l'expression des comportements naturels due au manque d'espace."
             }
         ];
 
-        // --- 2. GESTION DE LA CARTE ---
-        // Initialiser la carte centrée sur la France
-        const map = L.map('map').setView([46.603354, 1.888334], 6);
+        // ==========================================
+        // DONNÉES DE LA GRILLE DE NOTATION
+        // ==========================================
+        const criteriaData = [
+            {
+                icon: "fa-maximize", title: "1. Espace et Habitat (40%)", color: "emerald",
+                details: "Taille des enclos, aménagement, zones de retrait hors de la vue du public."
+            },
+            {
+                icon: "fa-apple-whole", title: "2. Alimentation et Soins (30%)", color: "blue",
+                details: "Qualité de la nourriture, soins vétérinaires préventifs, hygiène."
+            },
+            {
+                icon: "fa-paw", title: "3. Comportement (15%)", color: "amber",
+                details: "Possibilité d'exprimer des comportements naturels, absence de stéréotypies."
+            },
+            {
+                icon: "fa-graduation-cap", title: "4. Pédagogie (15%)", color: "purple",
+                details: "Qualité des panneaux éducatifs, absence de spectacles dégradants, conservation."
+            }
+        ];
 
-        // Ajouter le fond de carte OpenStreetMap
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
+        // ==========================================
+        // COMPOSANTS COMMUNS
+        // ==========================================
+        const Navigation = ({ activeTab, setTab }) => (
+            <div className="bg-white shadow-sm sticky top-0 z-40 border-b border-slate-200">
+                <div className="max-w-6xl mx-auto px-4">
+                    <div className="flex space-x-2 md:space-x-8 overflow-x-auto custom-scroll">
+                        {[
+                            { id: 'home', icon: 'fa-house', label: 'Accueil' },
+                            { id: 'map', icon: 'fa-map-location-dot', label: 'La Carte' },
+                            { id: 'project', icon: 'fa-leaf', label: 'Le Projet RSE' },
+                            { id: 'grid', icon: 'fa-clipboard-check', label: 'La Grille' }
+                        ].map(tab => (
+                            <button 
+                                key={tab.id}
+                                onClick={() => setTab(tab.id)}
+                                className={`py-4 px-3 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 whitespace-nowrap 
+                                    ${activeTab === tab.id ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                            >
+                                <i className={`fa-solid ${tab.icon}`}></i> {tab.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
 
-        // Parcourir ta base de données pour placer les marqueurs
-        baseDeDonneesZoos.forEach(zoo => {
-            const marker = L.marker([zoo.lat, zoo.lng]).addTo(map);
+        const Modal = ({ zoo, onClose }) => {
+            if (!zoo) return null;
             
-            // Texte de la petite bulle sur la carte
-            marker.bindPopup(`
-                <b>${zoo.nom}</b><br>
-                ${zoo.label}<br>
-                <button onclick="openModal('${zoo.nom}')" style="margin-top:5px; padding:5px; cursor:pointer;">Voir l'évaluation</button>
-            `);
-        });
+            const badgeColors = {
+                green: "bg-emerald-600", yellow: "bg-amber-500", red: "bg-red-500"
+            };
 
-        // --- 3. GESTION DE LA FENÊTRE MODALE (Détails) ---
-        function openModal(nomZoo) {
-            // Chercher le zoo dans la base de données
-            const zoo = baseDeDonneesZoos.find(z => z.nom === nomZoo);
-            if(zoo) {
-                // Remplir la fenêtre avec les infos du zoo
-                document.getElementById('modal-nom').innerText = zoo.nom;
-                document.getElementById('modal-label').innerText = zoo.label;
-                document.getElementById('modal-ville').innerText = zoo.ville;
-                document.getElementById('modal-details').innerText = zoo.details;
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in" onClick={onClose}>
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden" onClick={e => e.stopPropagation()}>
+                        
+                        {/* Header de la Modal */}
+                        <div className="bg-slate-900 p-8 text-white relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-32 bg-emerald-600 rounded-full blur-3xl opacity-20 -mr-16 -mt-16"></div>
+                            <button onClick={onClose} className="absolute top-6 right-6 text-slate-400 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center">
+                                <i className="fa-solid fa-xmark text-lg"></i>
+                            </button>
+                            <div className="relative z-10">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <span className={`${badgeColors[zoo.color]} px-3 py-1 rounded-full text-xs font-bold tracking-wider shadow-sm`}>
+                                        {zoo.city}
+                                    </span>
+                                    <span className="text-amber-400 text-lg tracking-widest">{zoo.label}</span>
+                                </div>
+                                <h2 className="text-3xl font-bold mb-2">{zoo.name}</h2>
+                                <p className="text-slate-300 text-sm">{zoo.summary}</p>
+                            </div>
+                        </div>
+
+                        {/* Contenu de la Modal */}
+                        <div className="p-8 overflow-y-auto max-h-[60vh] custom-scroll bg-slate-50">
+                            <div className="mb-6">
+                                <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center">
+                                    <i className="fa-solid fa-magnifying-glass text-emerald-600 mr-2"></i> Analyse de l'évaluation
+                                </h3>
+                                <p className="text-sm text-slate-600 leading-relaxed text-justify">{zoo.analysis}</p>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <h4 className="text-xs font-bold text-emerald-700 uppercase mb-2"><i className="fa-solid fa-circle-plus mr-1"></i> Points Forts</h4>
+                                    <ul className="space-y-2">
+                                        {zoo.pros.map((pro, i) => (
+                                            <li key={i} className="text-sm text-slate-600 bg-emerald-50 p-2 rounded border border-emerald-100 flex items-start gap-2">
+                                                <i className="fa-solid fa-check text-emerald-500 mt-1"></i> <span>{pro}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4 className="text-xs font-bold text-red-700 uppercase mb-2"><i className="fa-solid fa-circle-minus mr-1"></i> Points Faibles</h4>
+                                    <ul className="space-y-2">
+                                        {zoo.cons.map((con, i) => (
+                                            <li key={i} className="text-sm text-slate-600 bg-red-50 p-2 rounded border border-red-100 flex items-start gap-2">
+                                                <i className="fa-solid fa-xmark text-red-500 mt-1"></i> <span>{con}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
+
+                            {zoo.warning && (
+                                <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl flex items-start gap-4 mt-4">
+                                    <i className="fa-solid fa-triangle-exclamation text-amber-500 text-xl mt-1"></i>
+                                    <div>
+                                        <h4 className="font-bold text-amber-900 text-sm uppercase mb-1">Alerte Éthique</h4>
+                                        <p className="text-sm text-amber-800">{zoo.warning}</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ==========================================
+        // PAGES DE L'APPLICATION
+        // ==========================================
+
+        const HomePage = ({ setTab }) => (
+            <div className="animate-fade-in flex-1">
+                <div className="relative bg-slate-900 overflow-hidden">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-emerald-900 via-slate-900 to-black opacity-80"></div>
+                    <div className="relative max-w-5xl mx-auto px-4 py-24 text-center">
+                        <div className="inline-block mb-6 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-emerald-200 text-sm font-semibold backdrop-blur-sm">
+                            Projet Étudiant RSE - 2026
+                        </div>
+                        <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+                            Label Voix Animale<br/>
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">
+                                Évaluer pour protéger.
+                            </span>
+                        </h1>
+                        <p className="text-slate-300 text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
+                            Notre mission : analyser les conditions de vie dans les parcs zoologiques français en toute transparence pour guider le public vers les structures les plus éthiques.
+                        </p>
+                        <button onClick={() => setTab('map')} className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-4 rounded-full font-bold shadow-lg shadow-emerald-500/30 transition-all transform hover:-translate-y-1">
+                            Découvrir la Carte <i className="fa-solid fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
                 
-                // Afficher la fenêtre
-                document.getElementById('zoo-modal').style.display = 'flex';
-            }
-        }
+                <div className="max-w-6xl mx-auto px-4 py-20 -mt-16 relative z-10">
+                    <div className="grid md:grid-cols-3 gap-8">
+                        <div onClick={() => setTab('map')} className="bg-white p-8 rounded-2xl shadow-xl border border-slate-100 hover:shadow-2xl transition-all cursor-pointer group hover:-translate-y-2">
+                            <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-3xl text-emerald-600 mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                                <i className="fa-solid fa-map-location-dot"></i>
+                            </div>
+                            <h3 className="text-2xl font-bold text-slate-800 mb-3">La Carte</h3>
+                            <p className="text-slate-500 mb-6">Explorez la carte interactive des zoos évalués par notre équipe et consultez leurs notes.</p>
+                        </div>
+                        
+                        <div onClick={() => setTab('project')} className="bg-white p-8 rounded-2xl shadow-xl border border-slate-100 hover:shadow-2xl transition-all cursor-pointer group hover:-translate-y-2">
+                            <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-3xl text-blue-600 mb-6 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                <i className="fa-solid fa-leaf"></i>
+                            </div>
+                            <h3 className="text-2xl font-bold text-slate-800 mb-3">Notre Projet</h3>
+                            <p className="text-slate-500 mb-6">Découvrez la démarche RSE derrière ce projet étudiant et nos objectifs pour le bien-être animal.</p>
+                        </div>
+                        
+                        <div onClick={() => setTab('grid')} className="bg-white p-8 rounded-2xl shadow-xl border border-slate-100 hover:shadow-2xl transition-all cursor-pointer group hover:-translate-y-2">
+                            <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center text-3xl text-amber-500 mb-6 group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                                <i className="fa-solid fa-clipboard-list"></i>
+                            </div>
+                            <h3 className="text-2xl font-bold text-slate-800 mb-3">La Grille</h3>
+                            <p className="text-slate-500 mb-6">Examinez nos critères d'évaluation scientifiques et objectifs utilisés pour attribuer nos labels.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
 
-        function closeModal() {
-            document.getElementById('zoo-modal').style.display = 'none';
-        }
+        const MapPage = ({ setSelectedZoo }) => {
+            useEffect(() => {
+                // Initialisation de la carte Leaflet
+                const map = L.map('map-container').setView([46.603354, 1.888334], 6);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap'
+                }).addTo(map);
 
-        // --- 4. GESTION DES ONGLETS ---
-        function openTab(nomOnglet) {
-            // Cacher tous les contenus
-            const contents = document.getElementsByClassName('tab-content');
-            for(let i = 0; i < contents.length; i++) {
-                contents[i].classList.remove('active');
-            }
-            
-            // Enlever l'état actif de tous les boutons
-            const boutons = document.querySelectorAll('nav button');
-            boutons.forEach(btn => btn.classList.remove('active'));
+                // Ajout des marqueurs depuis la base de données
+                zoosData.forEach(zoo => {
+                    const marker = L.marker([zoo.lat, zoo.lng]).addTo(map);
+                    // Création du bouton dans la bulle
+                    const popupContent = document.createElement('div');
+                    popupContent.innerHTML = `
+                        <div class="font-bold text-slate-800 mb-1">${zoo.name}</div>
+                        <div class="text-amber-500 mb-2">${zoo.label}</div>
+                        <button class="bg-emerald-600 text-white px-3 py-1 rounded text-xs hover:bg-emerald-700 w-full">Voir l'audit</button>
+                    `;
+                    // Associer l'événement React au bouton Leaflet
+                    popupContent.querySelector('button').onclick = () => setSelectedZoo(zoo);
+                    
+                    marker.bindPopup(popupContent);
+                });
 
-            // Afficher l'onglet cliqué
-            document.getElementById(nomOnglet).classList.add('active');
-            document.getElementById('btn-' + nomOnglet).classList.add('active');
+                // Nettoyage lors du changement d'onglet
+                return () => map.remove();
+            }, []);
 
-            // Petite astuce technique : Si on clique sur la carte, on dit à Leaflet de recalculer sa taille
-            if(nomOnglet === 'carte') {
-                setTimeout(() => { map.invalidateSize(); }, 100);
-            }
-        }
+            return (
+                <div className="animate-fade-in max-w-6xl mx-auto px-4 py-12">
+                    <div className="text-center mb-10">
+                        <h2 className="text-3xl font-bold text-slate-800 mb-4">Carte des Parcs Zoologiques</h2>
+                        <p className="text-slate-500 max-w-2xl mx-auto">Cliquez sur les marqueurs pour consulter les notes de bien-être animal attribuées par notre comité d'éthique.</p>
+                    </div>
+
+                    <div className="bg-white p-2 md:p-4 rounded-2xl shadow-lg border border-slate-200 mb-12">
+                        {/* La carte Leaflet s'affichera ici */}
+                        <div id="map-container" className="w-full h-[500px] z-10"></div>
+                    </div>
+
+                    <div className="bg-emerald-50 rounded-2xl p-8 border border-emerald-100 flex flex-col md:flex-row gap-8 items-center shadow-sm">
+                        <div className="flex-1">
+                            <h3 className="text-2xl font-bold text-emerald-900 mb-3"><i className="fa-solid fa-bullhorn mr-2"></i> Proposer un parc</h3>
+                            <p className="text-emerald-800 text-sm leading-relaxed mb-4">
+                                Un zoo manque à notre carte ? En tant que démarche participative, nous acceptons les suggestions du public pour nos prochaines campagnes d'évaluation.
+                            </p>
+                        </div>
+                        <div className="flex-1 w-full bg-white p-6 rounded-xl shadow-sm border border-emerald-100">
+                            <form action="mailto:contact@voix-animale.fr" method="post" enctype="text/plain" className="flex flex-col gap-4">
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase">Nom du parc</label>
+                                    <input type="text" name="Zoo" className="w-full border border-slate-200 rounded p-2 mt-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none" required />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase">Pourquoi l'évaluer ?</label>
+                                    <textarea name="Raison" rows="2" className="w-full border border-slate-200 rounded p-2 mt-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none"></textarea>
+                                </div>
+                                <button type="submit" className="bg-emerald-600 text-white font-bold py-3 rounded hover:bg-emerald-700 transition-colors">
+                                    Envoyer la suggestion
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const ProjectPage = () => (
+            <div className="animate-fade-in max-w-4xl mx-auto px-4 py-12">
+                <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-slate-100">
+                    <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-4xl mb-6 mx-auto">
+                        <i className="fa-solid fa-seedling"></i>
+                    </div>
+                    <h2 className="text-3xl md:text-4xl font-bold text-slate-800 text-center mb-8">À propos de "Label Voix Animale"</h2>
+                    
+                    <div className="space-y-8 text-slate-600 leading-relaxed text-lg">
+                        <p>
+                            Bienvenue sur notre plateforme. Nous sommes un groupe d'étudiants passionnés et engagés dans la <strong>Responsabilité Sociétale des Entreprises (RSE)</strong>. Face aux questionnements éthiques grandissants concernant la captivité animale, nous avons décidé d'agir.
+                        </p>
+                        
+                        <div className="border-l-4 border-emerald-500 pl-6 py-2 bg-emerald-50 rounded-r-xl">
+                            <h3 className="text-xl font-bold text-emerald-900 mb-2">Notre Mission</h3>
+                            <p className="text-emerald-800 text-base">
+                                Promouvoir le bien-être animal en évaluant de manière transparente les parcs zoologiques. Nous croyons fermement qu'une information claire et accessible permet aux visiteurs de faire des choix éclairés, poussant ainsi les structures à s'améliorer.
+                            </p>
+                        </div>
+
+                        <p>
+                            Notre approche n'est pas militante au sens punitif, mais <strong>incitative et scientifique</strong>. Nous reconnaissons les efforts de conservation de certains parcs, tout en pointant du doigt les pratiques obsolètes qui ne respectent pas les besoins physiologiques et psychologiques fondamentaux des animaux.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const GridPage = () => (
+            <div className="animate-fade-in max-w-6xl mx-auto px-4 py-12">
+                <div className="text-center mb-12">
+                    <h2 className="text-3xl font-bold text-slate-800 mb-4">Notre Grille de Notation</h2>
+                    <p className="text-slate-500 max-w-2xl mx-auto">Chaque évaluation est menée selon une grille d'audit stricte. Les points obtenus définissent le niveau d'excellence du parc.</p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6 mb-16">
+                    {criteriaData.map((crit, idx) => (
+                        <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex gap-4 hover:shadow-md transition-shadow">
+                            <div className={`w-12 h-12 flex-shrink-0 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-xl`}>
+                                <i className={`fa-solid ${crit.icon}`}></i>
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-lg text-slate-800 mb-2">{crit.title}</h3>
+                                <p className="text-sm text-slate-500">{crit.details}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="bg-slate-900 text-white rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-32 bg-amber-500 rounded-full blur-3xl opacity-10"></div>
+                    <h3 className="text-2xl font-bold mb-8 relative z-10 text-center">Niveaux de Label Attribués</h3>
+                    
+                    <div className="grid md:grid-cols-3 gap-6 relative z-10">
+                        <div className="bg-white/10 backdrop-blur border border-white/20 p-6 rounded-xl text-center">
+                            <div className="text-amber-400 text-2xl mb-3">⭐⭐⭐</div>
+                            <h4 className="font-bold text-white mb-2">Excellence</h4>
+                            <p className="text-sm text-slate-300">Le bien-être est absolu. Les standards dépassent la législation en vigueur.</p>
+                        </div>
+                        <div className="bg-white/10 backdrop-blur border border-white/20 p-6 rounded-xl text-center">
+                            <div className="text-amber-400 text-2xl mb-3">⭐⭐</div>
+                            <h4 className="font-bold text-white mb-2">Bon / En progrès</h4>
+                            <p className="text-sm text-slate-300">Des efforts réels sont visibles, mais certaines installations nécessitent d'être modernisées.</p>
+                        </div>
+                        <div className="bg-white/10 backdrop-blur border border-white/20 p-6 rounded-xl text-center">
+                            <div className="text-amber-400 text-2xl mb-3">⭐</div>
+                            <h4 className="font-bold text-white mb-2">Insuffisant</h4>
+                            <p className="text-sm text-slate-300">Critères fondamentaux non respectés pour plusieurs espèces. Refonte nécessaire.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+
+        // ==========================================
+        // APPLICATION PRINCIPALE
+        // ==========================================
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('home');
+            const [selectedZoo, setSelectedZoo] = useState(null);
+
+            return (
+                <div className="min-h-screen flex flex-col font-sans">
+                    <Navigation activeTab={activeTab} setTab={setActiveTab} />
+                    
+                    <main className="flex-grow">
+                        {activeTab === 'home' && <HomePage setTab={setActiveTab} />}
+                        {activeTab === 'map' && <MapPage setSelectedZoo={setSelectedZoo} />}
+                        {activeTab === 'project' && <ProjectPage />}
+                        {activeTab === 'grid' && <GridPage />}
+                    </main>
+
+                    <footer className="bg-slate-900 text-slate-400 py-8 text-center border-t border-slate-800">
+                        <div className="max-w-4xl mx-auto px-4">
+                            <p className="font-bold text-emerald-500 mb-2"><i className="fa-solid fa-paw mr-2"></i>Label Voix Animale</p>
+                            <p className="text-sm">Projet Étudiant RSE © 2026. Fait avec passion pour la cause animale.</p>
+                        </div>
+                    </footer>
+                    
+                    {/* Fenêtre modale qui s'ouvre quand on clique sur un zoo */}
+                    <Modal zoo={selectedZoo} onClose={() => setSelectedZoo(null)} />
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
