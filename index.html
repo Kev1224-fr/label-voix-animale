@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Label Voix Animale</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        /* =========================================
+           STYLES (CSS) - Le design du site
+           ========================================= */
+        :root {
+            --primary: #2e7d32; /* Vert nature principal */
+            --secondary: #f9a825; /* Jaune/Orange pour les étoiles */
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        header h1 { margin: 0; font-size: 1.5rem; }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 1.5rem;
+            margin: 0;
+            padding: 0;
+        }
+
+        nav button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+
+        nav button:hover, nav button.active {
+            background-color: rgba(255,255,255,0.2);
+        }
+
+        main {
+            max-width: 1000px;
+            margin: 2rem auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.05);
+        }
+
+        /* Gestion des onglets */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.5s; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Carte */
+        #map {
+            height: 500px;
+            width: 100%;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+            margin-bottom: 2rem;
+            z-index: 1; /* Reste sous la navigation */
+        }
+
+        /* Formulaire de proposition */
+        .suggestion-box {
+            background-color: #e8f5e9;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 5px solid var(--primary);
+        }
+
+        form { display: flex; flex-direction: column; gap: 1rem; }
+        input, textarea {
+            padding: 0.8rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+        button.submit-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem;
+            font-size: 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button.submit-btn:hover { background-color: #1b5e20; }
+
+        /* Fenêtre Modale (Détail du zoo) */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            max-width: 600px;
+            width: 90%;
+            position: relative;
+        }
+        .close-btn {
+            position: absolute;
+            top: 10px; right: 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #888;
+        }
+        .close-btn:hover { color: red; }
+        .label-stars { color: var(--secondary); font-size: 1.2rem; }
+        
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🐾 Label Voix Animale</h1>
+        <nav>
+            <ul>
+                <li><button onclick="openTab('carte')" class="active" id="btn-carte">La Carte</button></li>
+                <li><button onclick="openTab('projet')" id="btn-projet">Notre Projet</button></li>
+                <li><button onclick="openTab('grille')" id="btn-grille">Grille de Notation</button></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="carte" class="tab-content active">
+            <h2>Carte des Zoos Évalués</h2>
+            <p>Découvrez notre évaluation du bien-être animal dans les différents parcs zoologiques de France. Cliquez sur un marqueur pour voir les détails.</p>
+            
+            <div id="map"></div>
+
+            <div class="suggestion-box">
+                <h3>Proposer un zoo à évaluer</h3>
+                <p>Un parc manque à l'appel ? Dites-le nous !</p>
+                <form action="mailto:votre.email.etudiant@ecole.fr" method="post" enctype="text/plain">
+                    <input type="text" name="Nom_du_Zoo" placeholder="Nom du zoo" required>
+                    <input type="text" name="Ville" placeholder="Ville ou Région" required>
+                    <textarea name="Pourquoi" rows="3" placeholder="Pourquoi devrions-nous évaluer ce parc ?"></textarea>
+                    <button type="submit" class="submit-btn">Envoyer la proposition (Ouvre votre messagerie)</button>
+                </form>
+            </div>
+        </section>
+
+        <section id="projet" class="tab-content">
+            <h2>À propos du projet "Label Voix Animale"</h2>
+            <p>Bienvenue sur notre plateforme. Nous sommes un groupe d'étudiants engagés dans la Responsabilité Sociétale des Entreprises (RSE).</p>
+            <h3>Notre mission</h3>
+            <p>Notre but est de promouvoir le bien-être animal en évaluant de manière transparente les parcs zoologiques. Nous croyons qu'une information claire permet aux visiteurs de faire des choix éclairés et pousse les structures à améliorer les conditions de vie de leurs pensionnaires.</p>
+            <h3>Comment nous procédons ?</h3>
+            <p>Nous utilisons une grille de notation stricte et objective, basée sur les standards internationaux de la conservation et de l'éthologie.</p>
+        </section>
+
+        <section id="grille" class="tab-content">
+            <h2>Notre Grille de Notation</h2>
+            <p>Voici les critères sur lesquels nous basons notre Label. Chaque critère rapporte des points, définissant le niveau final d'étoiles.</p>
+            <ul>
+                <li><strong>Espace et Habitat (40%) :</strong> Taille des enclos, enrichissement naturel, zones de retrait pour les animaux.</li>
+                <li><strong>Alimentation et Soins (30%) :</strong> Qualité de la nourriture, présence vétérinaire, soins préventifs.</li>
+                <li><strong>Comportement (15%) :</strong> Possibilité d'exprimer des comportements naturels (gratter, grimper, nager), absence de stéréotypies.</li>
+                <li><strong>Pédagogie et Conservation (15%) :</strong> Programmes de réintroduction, panneaux éducatifs (sans spectacles dégradants).</li>
+            </ul>
+            <p><strong>Niveaux de Label :</strong><br>
+                ⭐⭐⭐ : Excellence (Le bien-être est une priorité absolue).<br>
+                ⭐⭐ : Bon (Des efforts réels, mais des améliorations possibles).<br>
+                ⭐ : Insuffisant (Critères de base non respectés pour plusieurs espèces).
+            </p>
+        </section>
+    </main>
+
+    <div id="zoo-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2 id="modal-nom">Nom du Zoo</h2>
+            <div class="label-stars" id="modal-label">⭐⭐⭐</div>
+            <p><strong>Ville :</strong> <span id="modal-ville">Ville</span></p>
+            <hr>
+            <h3>Détail de l'évaluation :</h3>
+            <p id="modal-details">Détails ici...</p>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Projet Étudiant RSE - Label Voix Animale. Fait avec ❤️ pour les animaux.</p>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // --- 1. TON ESPACE ADMIN : AJOUTE TES ZOOS ICI ---
+        // C'est ici que tu ajoutes, modifies ou supprimes tes évaluations.
+        // Copie-colle un bloc { ... } pour ajouter un nouveau zoo.
+        
+        const baseDeDonneesZoos = [
+            {
+                nom: "Zoo de la Tête d'Or",
+                ville: "Lyon",
+                lat: 45.7786,  // Latitude (Trouvable sur Google Maps)
+                lng: 4.8532,   // Longitude
+                label: "⭐⭐",
+                details: "Entrée gratuite et parc historique. Bon espace pour les girafes, mais certains enclos pour les primates nécessiteraient davantage d'enrichissement naturel. Efforts notés sur la conservation."
+            },
+            {
+                nom: "Bioparc de Doué-la-Fontaine",
+                ville: "Doué-en-Anjou",
+                lat: 47.1895,
+                lng: -0.2974,
+                label: "⭐⭐⭐",
+                details: "Excellente gestion de l'espace avec des carrières de faluns immenses. Les animaux évoluent dans des environnements très proches de leur milieu naturel. Très forte implication dans la conservation in-situ."
+            },
+            {
+                nom: "Parc Zoologique de Paris",
+                ville: "Paris",
+                lat: 48.8318,
+                lng: 2.4173,
+                label: "⭐⭐",
+                details: "Rénovation complète réussie offrant de vastes biozones. Soins vétérinaires excellents. Cependant, la cohabitation de certaines espèces dans des espaces restreints fait perdre quelques points."
+            }
+        ];
+
+        // --- 2. GESTION DE LA CARTE ---
+        // Initialiser la carte centrée sur la France
+        const map = L.map('map').setView([46.603354, 1.888334], 6);
+
+        // Ajouter le fond de carte OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // Parcourir ta base de données pour placer les marqueurs
+        baseDeDonneesZoos.forEach(zoo => {
+            const marker = L.marker([zoo.lat, zoo.lng]).addTo(map);
+            
+            // Texte de la petite bulle sur la carte
+            marker.bindPopup(`
+                <b>${zoo.nom}</b><br>
+                ${zoo.label}<br>
+                <button onclick="openModal('${zoo.nom}')" style="margin-top:5px; padding:5px; cursor:pointer;">Voir l'évaluation</button>
+            `);
+        });
+
+        // --- 3. GESTION DE LA FENÊTRE MODALE (Détails) ---
+        function openModal(nomZoo) {
+            // Chercher le zoo dans la base de données
+            const zoo = baseDeDonneesZoos.find(z => z.nom === nomZoo);
+            if(zoo) {
+                // Remplir la fenêtre avec les infos du zoo
+                document.getElementById('modal-nom').innerText = zoo.nom;
+                document.getElementById('modal-label').innerText = zoo.label;
+                document.getElementById('modal-ville').innerText = zoo.ville;
+                document.getElementById('modal-details').innerText = zoo.details;
+                
+                // Afficher la fenêtre
+                document.getElementById('zoo-modal').style.display = 'flex';
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('zoo-modal').style.display = 'none';
+        }
+
+        // --- 4. GESTION DES ONGLETS ---
+        function openTab(nomOnglet) {
+            // Cacher tous les contenus
+            const contents = document.getElementsByClassName('tab-content');
+            for(let i = 0; i < contents.length; i++) {
+                contents[i].classList.remove('active');
+            }
+            
+            // Enlever l'état actif de tous les boutons
+            const boutons = document.querySelectorAll('nav button');
+            boutons.forEach(btn => btn.classList.remove('active'));
+
+            // Afficher l'onglet cliqué
+            document.getElementById(nomOnglet).classList.add('active');
+            document.getElementById('btn-' + nomOnglet).classList.add('active');
+
+            // Petite astuce technique : Si on clique sur la carte, on dit à Leaflet de recalculer sa taille
+            if(nomOnglet === 'carte') {
+                setTimeout(() => { map.invalidateSize(); }, 100);
+            }
+        }
+    </script>
+</body>
+</html>
