@@ -20,19 +20,16 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
         
-        /* Barres de défilement personnalisées */
         .custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
         .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         
-        /* Animations */
         .fade-in { animation: fadeIn 0.5s ease-in-out; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Fix pour la carte Leaflet et suppression du fond blanc des marqueurs personnalisés */
         #map-container { z-index: 10; border-radius: 1rem; }
         .leaflet-container { font-family: 'Inter', sans-serif; }
         .custom-leaflet-icon { background: transparent; border: none; }
@@ -47,7 +44,6 @@
         // ==========================================
         // TON ESPACE ADMIN : BASE DE DONNÉES DES ZOOS
         // ==========================================
-        // Niveaux (level) : 4 (⭐⭐⭐⭐), 3 (⭐⭐⭐), 2 (⭐⭐), 1 (⭐)
         const zoosData = [
             {
                 id: 1,
@@ -70,9 +66,9 @@
                 level: 3,
                 stars: "⭐⭐⭐",
                 summary: "De vastes étendues offrant une semi-liberté très appréciable pour les herbivores.",
-                analysis: "Le format 'safari' permet d'offrir des centaines d'hectares aux troupeaux. Les comportements grégaires naturels sont parfaitement respectés. Les zones piétonnes sont plus classiques mais restent de bonne taille.",
+                analysis: "Le format 'safari' permet d'offrir des centaines d'hectares aux troupeaux. Les comportements grégaires naturels sont parfaitement respectés. Les zones piétonnes sont plus classiques mais en cours de modernisation.",
                 pros: ["Espaces immenses pour la faune de plaine", "Cohabitation naturelle des espèces"],
-                cons: ["Trafic automobile parfois polluant dans la zone safari"],
+                cons: ["Impact carbone du format 'safari automobile'"],
                 warning: null
             },
             {
@@ -82,11 +78,11 @@
                 lat: 45.7786, lng: 4.8532,
                 level: 2,
                 stars: "⭐⭐",
-                summary: "Parc historique avec une gratuité d'accès, mais des installations inégales.",
-                analysis: "L'espace de la plaine africaine est vaste et bien conçu. Cependant, certains enclos historiques manquent de volume et d'enrichissement naturel.",
-                pros: ["Entrée gratuite (pédagogie pour tous)", "Bonne présence vétérinaire"],
-                cons: ["Enclos des primates trop minéraux", "Forte affluence stressante"],
-                warning: "Bruit environnant de la ville pouvant gêner certaines espèces."
+                summary: "Parc urbain historique engagé dans une transition positive.",
+                analysis: "La plaine africaine démontre une vraie volonté de bien-être. Le parc fait face à des défis architecturaux historiques (installations anciennes), mais les équipes déploient de vrais efforts d'enrichissement au quotidien.",
+                pros: ["Entrée gratuite (pédagogie inclusive)", "Bonne présence vétérinaire", "Efforts d'enrichissement"],
+                cons: ["Contraintes spatiales urbaines", "Installations historiques à moderniser"],
+                warning: null
             },
             {
                 id: 4,
@@ -95,22 +91,22 @@
                 lat: 48.8443, lng: 2.3601,
                 level: 1,
                 stars: "⭐",
-                summary: "Un zoo historique au cœur de Paris qui souffre d'un manque crucial d'espace.",
-                analysis: "Malgré l'importance historique et architecturale, l'espace disponible au cœur de la capitale est insuffisant pour répondre aux standards modernes du bien-être animal.",
-                pros: ["Architecture historique classée"],
-                cons: ["Taille des enclos dramatiquement petite", "Impossibilité d'extension matérielle"],
-                warning: "Alerte sur l'expression des comportements naturels due au manque d'espace."
+                summary: "Institution historique initiant sa réflexion sur le bien-être animal moderne.",
+                analysis: "Situé au cœur de Paris, le parc fait face à des contraintes spatiales extrêmes. Ce label salue les premières initiatives visant à réorienter la collection vers des espèces de plus petite taille, mieux adaptées à cet espace classé.",
+                pros: ["Architecture historique préservée", "Programmes d'élevage spécifiques", "Potentiel pédagogique fort"],
+                cons: ["Espaces très restreints pour la grande faune", "Proximité importante avec le public"],
+                warning: "Nous encourageons la poursuite de la transition vers des espèces nécessitant de plus petits territoires."
             }
         ];
 
         // ==========================================
-        // DESIGN SYSTEM DES NIVEAUX (4 Labels)
+        // DESIGN SYSTEM DES NIVEAUX (Constructifs et RSE)
         // ==========================================
         const levelConfig = {
             4: { colorClass: "bg-emerald-600", textClass: "text-emerald-600", icon: "fa-award", title: "Excellence" },
-            3: { colorClass: "bg-lime-500", textClass: "text-lime-600", icon: "fa-check-double", title: "Très Favorable" },
-            2: { colorClass: "bg-amber-500", textClass: "text-amber-500", icon: "fa-scale-balanced", title: "Améliorable" },
-            1: { colorClass: "bg-red-500", textClass: "text-red-500", icon: "fa-triangle-exclamation", title: "Critique" }
+            3: { colorClass: "bg-lime-500", textClass: "text-lime-600", icon: "fa-leaf", title: "Engagé" },
+            2: { colorClass: "bg-amber-500", textClass: "text-amber-500", icon: "fa-arrows-rotate", title: "En Transition" },
+            1: { colorClass: "bg-blue-500", textClass: "text-blue-500", icon: "fa-seedling", title: "En Développement" }
         };
 
         // ==========================================
@@ -123,7 +119,7 @@
                         {[
                             { id: 'home', icon: 'fa-house', label: 'Accueil' },
                             { id: 'map', icon: 'fa-map-location-dot', label: 'La Carte' },
-                            { id: 'project', icon: 'fa-leaf', label: 'Le Projet' },
+                            { id: 'project', icon: 'fa-bullseye', label: 'Le Projet' },
                             { id: 'grid', icon: 'fa-clipboard-check', label: 'La Grille' }
                         ].map(tab => (
                             <button 
@@ -149,7 +145,6 @@
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in" onClick={onClose}>
                     <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden" onClick={e => e.stopPropagation()}>
                         
-                        {/* Header de la Modal */}
                         <div className="bg-slate-900 p-8 text-white relative overflow-hidden">
                             <div className={`absolute top-0 right-0 p-32 ${theme.colorClass} rounded-full blur-3xl opacity-20 -mr-16 -mt-16`}></div>
                             <button onClick={onClose} className="absolute top-6 right-6 text-slate-400 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center">
@@ -161,25 +156,24 @@
                                         {zoo.city}
                                     </span>
                                     <span className="text-amber-400 text-lg tracking-widest">{zoo.stars}</span>
-                                    <span className="text-white/60 text-xs uppercase font-bold ml-2">Label {theme.title}</span>
+                                    <span className="text-white/80 text-xs uppercase font-bold ml-2">Label : {theme.title}</span>
                                 </div>
                                 <h2 className="text-3xl font-bold mb-2">{zoo.name}</h2>
                                 <p className="text-slate-300 text-sm">{zoo.summary}</p>
                             </div>
                         </div>
 
-                        {/* Contenu de la Modal */}
                         <div className="p-8 overflow-y-auto max-h-[60vh] custom-scroll bg-slate-50">
                             <div className="mb-6">
                                 <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center">
-                                    <i className="fa-solid fa-magnifying-glass text-emerald-600 mr-2"></i> Analyse de l'évaluation
+                                    <i className="fa-solid fa-magnifying-glass text-emerald-600 mr-2"></i> Synthèse de l'évaluation
                                 </h3>
                                 <p className="text-sm text-slate-600 leading-relaxed text-justify">{zoo.analysis}</p>
                             </div>
 
                             <div className="grid md:grid-cols-2 gap-6 mb-6">
                                 <div>
-                                    <h4 className="text-xs font-bold text-emerald-700 uppercase mb-2"><i className="fa-solid fa-circle-plus mr-1"></i> Points Forts</h4>
+                                    <h4 className="text-xs font-bold text-emerald-700 uppercase mb-2"><i className="fa-solid fa-plus mr-1"></i> Initiatives Positives</h4>
                                     <ul className="space-y-2">
                                         {zoo.pros.map((pro, i) => (
                                             <li key={i} className="text-sm text-slate-600 bg-emerald-50 p-2 rounded border border-emerald-100 flex items-start gap-2">
@@ -189,11 +183,11 @@
                                     </ul>
                                 </div>
                                 <div>
-                                    <h4 className="text-xs font-bold text-red-700 uppercase mb-2"><i className="fa-solid fa-circle-minus mr-1"></i> Points Faibles</h4>
+                                    <h4 className="text-xs font-bold text-slate-600 uppercase mb-2"><i className="fa-solid fa-arrow-trend-up mr-1"></i> Pistes d'Amélioration</h4>
                                     <ul className="space-y-2">
                                         {zoo.cons.map((con, i) => (
-                                            <li key={i} className="text-sm text-slate-600 bg-red-50 p-2 rounded border border-red-100 flex items-start gap-2">
-                                                <i className="fa-solid fa-xmark text-red-500 mt-1"></i> <span>{con}</span>
+                                            <li key={i} className="text-sm text-slate-600 bg-white p-2 rounded border border-slate-200 flex items-start gap-2">
+                                                <i className="fa-solid fa-circle-dot text-slate-400 mt-1 text-[10px]"></i> <span>{con}</span>
                                             </li>
                                         ))}
                                     </ul>
@@ -201,11 +195,11 @@
                             </div>
 
                             {zoo.warning && (
-                                <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl flex items-start gap-4 mt-4">
-                                    <i className="fa-solid fa-triangle-exclamation text-amber-500 text-xl mt-1"></i>
+                                <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-xl flex items-start gap-4 mt-4">
+                                    <i className="fa-solid fa-lightbulb text-blue-500 text-xl mt-1"></i>
                                     <div>
-                                        <h4 className="font-bold text-amber-900 text-sm uppercase mb-1">Point de vigilance</h4>
-                                        <p className="text-sm text-amber-800">{zoo.warning}</p>
+                                        <h4 className="font-bold text-blue-900 text-sm uppercase mb-1">Encouragement RSE</h4>
+                                        <p className="text-sm text-blue-800">{zoo.warning}</p>
                                     </div>
                                 </div>
                             )}
@@ -230,11 +224,11 @@
                         <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
                             Label Voix Animale<br/>
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">
-                                Évaluer pour protéger.
+                                L'éthique en mouvement.
                             </span>
                         </h1>
                         <p className="text-slate-300 text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-                            Notre mission : analyser les conditions de vie dans les parcs zoologiques français en toute transparence pour guider le public vers les structures les plus éthiques.
+                            Notre mission : valoriser les parcs zoologiques français engagés et accompagner la transition de ceux en plein développement, pour un bien-être animal optimal.
                         </p>
                         <button onClick={() => setTab('map')} className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-4 rounded-full font-bold shadow-lg shadow-emerald-500/30 transition-all transform hover:-translate-y-1">
                             Découvrir la Carte <i className="fa-solid fa-arrow-right ml-2"></i>
@@ -249,23 +243,23 @@
                                 <i className="fa-solid fa-map-location-dot"></i>
                             </div>
                             <h3 className="text-2xl font-bold text-slate-800 mb-3">La Carte</h3>
-                            <p className="text-slate-500 mb-6">Explorez la carte interactive des zoos évalués par notre équipe et consultez leurs notes.</p>
+                            <p className="text-slate-500 mb-6">Explorez la carte interactive des zoos et découvrez leur niveau d'engagement dans notre label.</p>
                         </div>
                         
                         <div onClick={() => setTab('project')} className="bg-white p-8 rounded-2xl shadow-xl border border-slate-100 hover:shadow-2xl transition-all cursor-pointer group hover:-translate-y-2">
                             <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-3xl text-blue-600 mb-6 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                <i className="fa-solid fa-leaf"></i>
+                                <i className="fa-solid fa-bullseye"></i>
                             </div>
-                            <h3 className="text-2xl font-bold text-slate-800 mb-3">Notre Projet</h3>
-                            <p className="text-slate-500 mb-6">Découvrez la démarche RSE derrière ce projet étudiant et nos objectifs pour le bien-être animal.</p>
+                            <h3 className="text-2xl font-bold text-slate-800 mb-3">Notre Démarche</h3>
+                            <p className="text-slate-500 mb-6">Découvrez notre approche RSE bienveillante, axée sur l'encouragement et la transparence.</p>
                         </div>
                         
                         <div onClick={() => setTab('grid')} className="bg-white p-8 rounded-2xl shadow-xl border border-slate-100 hover:shadow-2xl transition-all cursor-pointer group hover:-translate-y-2">
                             <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center text-3xl text-amber-500 mb-6 group-hover:bg-amber-500 group-hover:text-white transition-colors">
                                 <i className="fa-solid fa-clipboard-list"></i>
                             </div>
-                            <h3 className="text-2xl font-bold text-slate-800 mb-3">La Grille</h3>
-                            <p className="text-slate-500 mb-6">Examinez les 4 niveaux de labels que nous attribuons lors de nos évaluations sur le terrain.</p>
+                            <h3 className="text-2xl font-bold text-slate-800 mb-3">La Grille Globale</h3>
+                            <p className="text-slate-500 mb-6">Comprenez comment notre score global se traduit en 4 niveaux de labels constructifs.</p>
                         </div>
                     </div>
                 </div>
@@ -274,18 +268,15 @@
 
         const MapPage = ({ setSelectedZoo }) => {
             useEffect(() => {
-                // Initialisation de la carte Leaflet
                 const map = L.map('map-container').setView([46.603354, 1.888334], 6);
                 
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '© OpenStreetMap'
                 }).addTo(map);
 
-                // Ajout des marqueurs avec le design personnalisé HTML/Tailwind
                 zoosData.forEach(zoo => {
                     const theme = levelConfig[zoo.level];
                     
-                    // Création d'une icône HTML (Un beau cercle coloré avec l'icône correspondante)
                     const customIcon = L.divIcon({
                         className: 'custom-leaflet-icon',
                         html: `
@@ -296,26 +287,23 @@
                             </div>
                         `,
                         iconSize: [48, 48],
-                        iconAnchor: [24, 24], // Centré
-                        popupAnchor: [0, -20] // La bulle s'ouvre juste au dessus
+                        iconAnchor: [24, 24],
+                        popupAnchor: [0, -20]
                     });
 
                     const marker = L.marker([zoo.lat, zoo.lng], { icon: customIcon }).addTo(map);
                     
-                    // Création du contenu de la bulle Leaflet
                     const popupContent = document.createElement('div');
                     popupContent.className = "text-center p-1";
                     popupContent.innerHTML = `
                         <div class="font-bold text-slate-800 mb-1 text-sm">${zoo.name}</div>
                         <div class="text-amber-500 mb-3 tracking-widest text-xs">${zoo.stars}</div>
                         <button class="${theme.colorClass} text-white px-4 py-1.5 rounded-full text-xs font-bold w-full shadow-sm hover:opacity-90 transition-opacity">
-                            Voir l'audit
+                            Voir le détail
                         </button>
                     `;
                     
-                    // On connecte le bouton à la fonction React pour ouvrir la modale
                     popupContent.querySelector('button').onclick = () => setSelectedZoo(zoo);
-                    
                     marker.bindPopup(popupContent);
                 });
 
@@ -325,15 +313,14 @@
             return (
                 <div className="animate-fade-in max-w-6xl mx-auto px-4 py-12">
                     <div className="text-center mb-10">
-                        <h2 className="text-3xl font-bold text-slate-800 mb-4">Carte des Parcs Évalués</h2>
-                        <p className="text-slate-500 max-w-2xl mx-auto mb-8">Cliquez sur les bulles pour consulter la note (sur 4 niveaux) attribuée par notre comité.</p>
+                        <h2 className="text-3xl font-bold text-slate-800 mb-4">Carte des Parcs Accompagnés</h2>
+                        <p className="text-slate-500 max-w-2xl mx-auto mb-8">Cliquez sur les bulles pour consulter le niveau d'engagement RSE actuel de chaque structure.</p>
                         
-                        {/* Légende rapide sous le titre */}
                         <div className="flex flex-wrap justify-center gap-4 text-xs font-bold">
                             <span className="flex items-center gap-2 px-3 py-1 bg-white rounded-full shadow-sm border border-slate-100"><span className="w-3 h-3 rounded-full bg-emerald-600"></span> 4 - Excellence</span>
-                            <span className="flex items-center gap-2 px-3 py-1 bg-white rounded-full shadow-sm border border-slate-100"><span className="w-3 h-3 rounded-full bg-lime-500"></span> 3 - Très Favorable</span>
-                            <span className="flex items-center gap-2 px-3 py-1 bg-white rounded-full shadow-sm border border-slate-100"><span className="w-3 h-3 rounded-full bg-amber-500"></span> 2 - Améliorable</span>
-                            <span className="flex items-center gap-2 px-3 py-1 bg-white rounded-full shadow-sm border border-slate-100"><span className="w-3 h-3 rounded-full bg-red-500"></span> 1 - Critique</span>
+                            <span className="flex items-center gap-2 px-3 py-1 bg-white rounded-full shadow-sm border border-slate-100"><span className="w-3 h-3 rounded-full bg-lime-500"></span> 3 - Engagé</span>
+                            <span className="flex items-center gap-2 px-3 py-1 bg-white rounded-full shadow-sm border border-slate-100"><span className="w-3 h-3 rounded-full bg-amber-500"></span> 2 - En Transition</span>
+                            <span className="flex items-center gap-2 px-3 py-1 bg-white rounded-full shadow-sm border border-slate-100"><span className="w-3 h-3 rounded-full bg-blue-500"></span> 1 - En Développement</span>
                         </div>
                     </div>
 
@@ -348,24 +335,24 @@
             <div className="animate-fade-in max-w-4xl mx-auto px-4 py-12">
                 <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-slate-100">
                     <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-4xl mb-6 mx-auto">
-                        <i className="fa-solid fa-seedling"></i>
+                        <i className="fa-solid fa-bullseye"></i>
                     </div>
-                    <h2 className="text-3xl md:text-4xl font-bold text-slate-800 text-center mb-8">À propos de "Label Voix Animale"</h2>
+                    <h2 className="text-3xl md:text-4xl font-bold text-slate-800 text-center mb-8">Notre Philosophie d'Action</h2>
                     
                     <div className="space-y-8 text-slate-600 leading-relaxed text-lg">
                         <p>
-                            Bienvenue sur notre plateforme. Nous sommes un groupe d'étudiants passionnés et engagés dans la <strong>Responsabilité Sociétale des Entreprises (RSE)</strong>. Face aux questionnements éthiques grandissants concernant la captivité animale, nous avons décidé d'agir.
+                            "Label Voix Animale" est un projet étudiant profondément ancré dans la <strong>Responsabilité Sociétale des Entreprises (RSE)</strong>. Face aux attentes sociétales concernant le bien-être animal, notre rôle n'est pas de juger, mais d'accompagner.
                         </p>
                         
-                        <div className="border-l-4 border-emerald-500 pl-6 py-2 bg-emerald-50 rounded-r-xl">
-                            <h3 className="text-xl font-bold text-emerald-900 mb-2">Notre Mission</h3>
-                            <p className="text-emerald-800 text-base">
-                                Promouvoir le bien-être animal en évaluant de manière transparente les parcs zoologiques. Nous croyons fermement qu'une information claire et accessible permet aux visiteurs de faire des choix éclairés, poussant ainsi les structures à s'améliorer.
+                        <div className="border-l-4 border-blue-500 pl-6 py-4 bg-blue-50 rounded-r-xl">
+                            <h3 className="text-xl font-bold text-blue-900 mb-2">Accompagner plutôt que punir</h3>
+                            <p className="text-blue-800 text-base">
+                                Nous savons que la gestion d'un parc zoologique est complexe et que les héritages architecturaux sont lourds. Notre label vise à <strong>valoriser les efforts</strong>, mettre en lumière les bonnes pratiques, et encourager de manière constructive les structures qui entament leur modernisation.
                             </p>
                         </div>
 
                         <p>
-                            Notre approche n'est pas militante au sens punitif, mais <strong>incitative et scientifique</strong>. Nous reconnaissons les efforts de conservation de certains parcs, tout en pointant du doigt les pratiques obsolètes qui ne respectent pas les besoins physiologiques et psychologiques fondamentaux des animaux.
+                            En proposant une évaluation transparente basée sur un score global, nous offrons au public une clé de lecture claire, tout en fournissant aux parcs un retour neutre pour soutenir leur politique de développement durable.
                         </p>
                     </div>
                 </div>
@@ -375,9 +362,9 @@
         const GridPage = () => (
             <div className="animate-fade-in max-w-5xl mx-auto px-4 py-12">
                 <div className="text-center mb-12">
-                    <h2 className="text-3xl font-bold text-slate-800 mb-4">La Grille de Notation & Les 4 Labels</h2>
-                    <p className="text-slate-500 max-w-2xl mx-auto">
-                        Notre grille de critères complète (Espace, Soins, Comportement, Pédagogie) sera détaillée prochainement sur cette page. En attendant, voici les 4 niveaux de labels que nous attribuons à l'issue de nos audits :
+                    <h2 className="text-3xl font-bold text-slate-800 mb-4">La Grille d'Évaluation Globale</h2>
+                    <p className="text-slate-500 max-w-3xl mx-auto">
+                        Notre label repose sur un système de <strong>score global</strong> calculé à l'aide d'une grille multicritères rigoureuse (Espace, Alimentation, Comportement, etc.). En fonction de la note finale obtenue, le parc se voit attribuer l'un de nos 4 niveaux d'engagement.
                     </p>
                 </div>
 
@@ -389,42 +376,42 @@
                             <h3 className="font-bold text-xl text-slate-800">Niveau 4 : Excellence</h3>
                         </div>
                         <div className="text-amber-400 mb-3 tracking-widest">⭐⭐⭐⭐</div>
-                        <p className="text-slate-600 text-sm">Le bien-être animal est la priorité absolue. Les espaces sont immenses, les comportements naturels sont totalement respectés. Les standards dépassent largement la législation en vigueur.</p>
+                        <p className="text-slate-600 text-sm">Le bien-être animal est au cœur de l'ADN du parc. Les espaces sont immersifs, favorisent l'expression de tous les comportements naturels, et le parc agit comme un acteur majeur de la conservation in-situ.</p>
                     </div>
 
                     {/* Niveau 3 */}
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-8 border-l-lime-500 hover:shadow-md transition-shadow">
                         <div className="flex items-center gap-3 mb-3">
-                            <div className="text-lime-500 text-2xl"><i className="fa-solid fa-check-double"></i></div>
-                            <h3 className="font-bold text-xl text-slate-800">Niveau 3 : Très Favorable</h3>
+                            <div className="text-lime-500 text-2xl"><i className="fa-solid fa-leaf"></i></div>
+                            <h3 className="font-bold text-xl text-slate-800">Niveau 3 : Engagé</h3>
                         </div>
                         <div className="text-amber-400 mb-3 tracking-widest">⭐⭐⭐</div>
-                        <p className="text-slate-600 text-sm">Le parc offre d'excellentes conditions de vie pour la grande majorité des espèces. De gros efforts de conservation sont menés. Quelques détails mineurs peuvent encore être optimisés.</p>
+                        <p className="text-slate-600 text-sm">Le parc fait preuve d'un engagement très solide pour la majorité de ses pensionnaires. L'alimentation, les soins et l'espace répondent à des standards élevés et récents.</p>
                     </div>
 
                     {/* Niveau 2 */}
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-8 border-l-amber-500 hover:shadow-md transition-shadow">
                         <div className="flex items-center gap-3 mb-3">
-                            <div className="text-amber-500 text-2xl"><i className="fa-solid fa-scale-balanced"></i></div>
-                            <h3 className="font-bold text-xl text-slate-800">Niveau 2 : Améliorable</h3>
+                            <div className="text-amber-500 text-2xl"><i className="fa-solid fa-arrows-rotate"></i></div>
+                            <h3 className="font-bold text-xl text-slate-800">Niveau 2 : En Transition</h3>
                         </div>
                         <div className="text-amber-400 mb-3 tracking-widest">⭐⭐</div>
-                        <p className="text-slate-600 text-sm">Des efforts réels sont visibles (soins vétérinaires, nourriture), mais de nombreuses installations historiques sont trop petites ou inadaptées. Une modernisation est nécessaire pour certaines espèces.</p>
+                        <p className="text-slate-600 text-sm">Une dynamique positive est en cours. Le parc investit pour moderniser ses installations historiques. Les équipes vétérinaires et soignantes déploient de réels efforts pour pallier certaines contraintes matérielles.</p>
                     </div>
 
                     {/* Niveau 1 */}
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-8 border-l-red-500 hover:shadow-md transition-shadow">
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-8 border-l-blue-500 hover:shadow-md transition-shadow">
                         <div className="flex items-center gap-3 mb-3">
-                            <div className="text-red-500 text-2xl"><i className="fa-solid fa-triangle-exclamation"></i></div>
-                            <h3 className="font-bold text-xl text-slate-800">Niveau 1 : Critique</h3>
+                            <div className="text-blue-500 text-2xl"><i className="fa-solid fa-seedling"></i></div>
+                            <h3 className="font-bold text-xl text-slate-800">Niveau 1 : En Développement</h3>
                         </div>
                         <div className="text-amber-400 mb-3 tracking-widest">⭐</div>
-                        <p className="text-slate-600 text-sm">Les critères fondamentaux de bien-être ne sont pas respectés pour plusieurs espèces (manque d'espace critique, absence d'enrichissement, stress visible). Une refonte totale est urgente.</p>
+                        <p className="text-slate-600 text-sm">Le parc montre un intérêt naissant pour les standards modernes du bien-être animal, mais fait face à des contraintes fortes (spatiales ou historiques). Ce label encourage vivement la restructuration et l'initiation de nouvelles pratiques.</p>
                     </div>
                 </div>
                 
                 <div className="mt-12 p-6 bg-slate-100 rounded-xl text-center border border-slate-200 border-dashed">
-                    <p className="text-slate-500 font-medium"><i className="fa-solid fa-hourglass-half mr-2"></i> Le détail point par point de notre grille d'évaluation scientifique sera publié ici prochainement.</p>
+                    <p className="text-slate-500 font-medium"><i className="fa-solid fa-calculator mr-2"></i> Le détail des critères qui composent le calcul de la note globale sera publié prochainement.</p>
                 </div>
             </div>
         );
@@ -450,7 +437,7 @@
                     <footer className="bg-slate-900 text-slate-400 py-8 text-center border-t border-slate-800 mt-12">
                         <div className="max-w-4xl mx-auto px-4">
                             <p className="font-bold text-emerald-500 mb-2"><i className="fa-solid fa-paw mr-2"></i>Label Voix Animale</p>
-                            <p className="text-sm">Projet Étudiant RSE © 2026. Fait avec passion pour la cause animale.</p>
+                            <p className="text-sm">Projet Étudiant RSE © 2026. Une démarche constructive pour le bien-être animal.</p>
                         </div>
                     </footer>
                     
