@@ -3,24 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BO'NATURE EXPORT - Référentiel 2026</title>
+    <title>Label Voix Animale - Projet RSE</title>
     
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
         
-        .timeline-line-center { position: absolute; left: 50%; transform: translateX(-50%); top: 0; bottom: 0; width: 4px; background-color: #E2E8F0; z-index: 0; }
-        .custom-scroll::-webkit-scrollbar { width: 8px; }
+        .custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
         .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        
         .fade-in { animation: fadeIn 0.5s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #map-container { z-index: 10; border-radius: 1rem; }
+        .leaflet-container { font-family: 'Inter', sans-serif; }
+        .custom-leaflet-icon { background: transparent; border: none; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
@@ -30,128 +42,72 @@
         const { useState, useEffect } = React;
 
         // ==========================================
-        // DÉTECTEUR DE MOTS CLÉS (GLOSSAIRE)
+        // TON ESPACE ADMIN : BASE DE DONNÉES DES ZOOS
         // ==========================================
-        const glossaryAcronyms = ["EORI", "REX", "IPAFFS", "PEACH", "SPS", "EHC", "DDPP", "MRN", "GVMS", "GMR", "BCP", "BTOM", "EMEBI", "NSTI", "T1", "HACCP"];
-        
-        // Composant qui transforme les mots techniques en liens vers le glossaire
-        const TextWithGlossaryLinks = ({ text, onNavigate }) => {
-            if (!text) return null;
-            const regex = new RegExp(`\\b(${glossaryAcronyms.join('|')})\\b`, 'gi');
-            const parts = text.split(regex);
-            
-            return (
-                <>{parts.map((part, i) => {
-                    const isTerm = glossaryAcronyms.find(t => t.toLowerCase() === part.toLowerCase());
-                    if (isTerm && onNavigate) {
-                        return (
-                            <button key={i} onClick={(e) => { e.stopPropagation(); onNavigate(isTerm); }} 
-                                className="inline-block text-purple-600 font-bold border-b-2 border-dotted border-purple-300 hover:text-purple-800 hover:border-purple-600 hover:bg-purple-50 transition-all px-1 rounded-sm cursor-pointer" 
-                                title={`Voir la définition de ${isTerm}`}>
-                                {part}
-                            </button>
-                        );
-                    }
-                    return <span key={i}>{part}</span>;
-                })}</>
-            );
-        };
-
-        // ==========================================
-        // DONNÉES - UK (ROYAUME-UNI)
-        // ==========================================
-        const ukTimelineData = [
-            { id: 0, type: "douane", category: "DOUANE & FISCAL", time: "PRÉALABLE (J-30)", title: "Enregistrement Opérateurs", actor: "Exportateur", sender: "Entreprise", receiver: "Douane", details: "Obtention des identifiants douaniers EORI et REX obligatoires pour interagir avec les systèmes.", analysis: "Le code des douanes impose une double immatriculation. L'exportateur doit avoir un EORI FR et un numéro REX pour certifier l'origine UE sur la facture. L'importateur DOIT avoir un EORI GB.", docs: ["EORI FR", "EORI GB", "Numéro REX"], warning: "Bloquant : Pas d'EORI GB = Impossible de dédouaner à l'arrivée." },
-            { id: 1, type: "sanitaire", category: "SPS (PRÉALABLE)", time: "J-3 (ANTICIPATION)", title: "Système IPAFFS", actor: "Importateur", sender: "Opérateur", receiver: "DEFRA", details: "Déclaration d'intention d'importation dans le système britannique unique IPAFFS (le système PEACH étant fermé).", analysis: "Depuis le BTOM, l'importateur britannique doit obligatoirement utiliser IPAFFS pour pré-notifier l'arrivée de marchandises sanitaires (SPS). C'est le point d'entrée unique.", docs: ["Création compte IPAFFS"], warning: "Attention : La responsabilité de la saisie incombe à l'importateur UK." },
-            { id: 2, type: "sanitaire", category: "SPS (ANIMAUX)", time: "DÉPART (J-2)", title: "Certification Sanitaire", actor: "DDPP", sender: "DDPP", receiver: "Exportateur", details: "Émission du certificat EHC officiel pour les produits animaux (Fromages, Viandes) par la DDPP.", analysis: "Réglementation SPS : Pour les produits à risque moyen, un vétérinaire officiel doit certifier la marchandise (EHC). Ce document atteste du respect des standards britanniques.", docs: ["Certificat EHC", "NIMP 15"], warning: "Bloquant : Pas de signature vétérinaire = Refoulement à la frontière." },
-            { id: 3, type: "sanitaire", category: "SPS (UK)", time: "J-1 (14h00)", title: "Pré-notification finale", actor: "Importateur", sender: "Importateur", receiver: "DEFRA", details: "Validation de la notification d'importation avec le certificat EHC définitif.", analysis: "L'importateur doit finaliser sa notification IPAFFS au minimum 4h avant l'arrivée. Il doit y joindre la version PDF du certificat EHC signé en France.", docs: ["Réf. Notification complète"], warning: "Vigilance : Le poids déclaré doit correspondre exactement au Certificat." },
-            { id: 4, type: "douane", category: "DOUANE", time: "J-1 (16h00)", title: "Déclarations Douane", actor: "Déclarant (RDE)", sender: "RDE", receiver: "Douane", details: "Dépôt des déclarations et obtention des MRN de sortie (France) et d'entrée (UK).", analysis: "La frontière intelligente exige que les déclarations soient validées AVANT l'arrivée au port pour obtenir un MRN (Export et Import).", docs: ["MRN Export (FR)", "MRN Import (UK)"], warning: "Bloquant : L'absence de MRN empêche la création des enveloppes logistiques." },
-            { id: 5, type: "transport", category: "LOGISTIQUE", time: "DÉPART (H-4)", title: "Enveloppe Logistique", actor: "Transporteur", sender: "Chauffeur", receiver: "Ferry / Tunnel", details: "Génération du GMR pour le passage frontière.", analysis: "Le système GVMS génère un GMR qui consolide les déclarations (MRN) et la plaque du camion pour l'embarquement. Fini le papier au guichet !", docs: ["Code-barres ELO/GMR"], warning: "Logistique : Le transporteur ne peut pas embarquer sans ce code." },
-            { id: 6, type: "transport", category: "CONTRÔLE", time: "ARRIVÉE (H+1)", title: "Analyse BCP", actor: "Douane UK", sender: "Système", receiver: "Chauffeur", details: "Statut délivré pendant la traversée : Libéré ou Contrôle BCP.", analysis: "Selon le risque BTOM, si le système indique un contrôle, le camion a l'obligation de se rendre au BCP (Border Control Post) pour une inspection SPS.", docs: ["Statut Sortie"], warning: "Pénal : Ne pas s'arrêter à un BCP convoqué est une infraction grave." }
-        ];
-
-        const ukBtomLevels = [
-            { level: "Risque Faible", icon: "fa-seedling", color: "green", products: "Conserves, Pâtes, Biscuits, Fruits & Légumes.", requirements: ["Facture Commerciale", "Pas de Certificat EHC", "Exemption IPAFFS (généralement)"], change: "Avantage : Logistique fluide et formalités réduites." },
-            { level: "Risque Moyen", icon: "fa-cheese", color: "yellow", products: "Viandes, Fromages au lait cru, Charcuterie.", requirements: ["Certificat EHC obligatoire", "Pré-notification IPAFFS", "Contrôles physiques BCP (1-30%)"], change: "Contrainte : Coûts vétérinaires et risque de retard." },
-            { level: "Risque Élevé", icon: "fa-cow", color: "red", products: "Animaux vivants, Végétaux pour plantation.", requirements: ["Certificat EHC Intégral", "Notification IPAFFS stricte", "Contrôle BCP systématique"], change: "Critique : Maîtrise totale de la chaîne requise." }
-        ];
-
-        // ==========================================
-        // DONNÉES - SCHENGEN
-        // ==========================================
-        const schengenData = [
-            {
-                id: 0,
-                type: "ue",
-                category: "UNION EUROPÉENNE",
-                title: "Vente Intracommunautaire",
-                details: "Livrer en Allemagne ou en Italie s'apparente à une livraison sur le territoire national.",
-                analysis: "L'Union Douanière implique l'absence de droits de douane. Le principe de reconnaissance mutuelle garantit que les normes sanitaires françaises (HACCP, Paquet Hygiène) sont valables dans toute l'UE sans contrôle SPS additionnel.",
-                docs: ["Facture avec TVA intracommunautaire", "CMR"],
-                icon: "fa-flag-eu"
-            },
+        const zoosData = [
             {
                 id: 1,
-                type: "ue",
-                category: "ADMINISTRATIF",
-                title: "Déclaration EMEBI",
-                details: "Obligation déclarative statistique pour le suivi des échanges intra-UE.",
-                analysis: "Si vous dépassez le seuil d'expédition annuel, vous devez soumettre la déclaration EMEBI (qui a remplacé l'ancienne DEB) aux douanes françaises pour des raisons statistiques.",
-                docs: ["Déclaration EMEBI mensuelle"],
-                icon: "fa-file-invoice"
+                name: "Bioparc de Doué-la-Fontaine",
+                city: "Doué-en-Anjou",
+                lat: 47.1895, lng: -0.2974,
+                level: 4, 
+                stars: "⭐⭐⭐⭐",
+                summary: "Une référence européenne en matière d'immersion et de respect de l'habitat.",
+                analysis: "L'utilisation des carrières de faluns permet de créer des espaces immenses. Les animaux évoluent dans des environnements très proches de leur milieu naturel. Très forte implication dans la conservation in-situ (Projets Nature).",
+                pros: ["Immersion totale et naturelle", "Enclos parmi les plus vastes d'Europe", "Politique de conservation exemplaire"],
+                cons: ["Certaines zones très escarpées pour le public"],
+                warning: null
             },
             {
                 id: 2,
-                type: "hors-ue",
-                category: "SCHENGEN HORS-UE",
-                title: "Suisse, Norvège, Islande...",
-                details: "Ces pays font partie de l'espace Schengen (personnes) mais sont exclus de l'Union Douanière (marchandises).",
-                analysis: "C'est le piège classique à l'export. On peut passer la frontière suisse sans contrôle d'identité, mais un camion de marchandises doit obligatoirement s'arrêter. Toute exportation vers la Suisse, la Norvège, l'Islande ou le Liechtenstein nécessite une déclaration d'exportation en douane. Des droits de douane et la TVA locale s'appliquent à l'arrivée.",
-                docs: ["Facture Export HT", "Déclaration Export"],
-                icon: "fa-mountain"
+                name: "Réserve Africaine de Sigean",
+                city: "Sigean",
+                lat: 43.0645, lng: 2.9497,
+                level: 3,
+                stars: "⭐⭐⭐",
+                summary: "De vastes étendues offrant une semi-liberté très appréciable pour les herbivores.",
+                analysis: "Le format 'safari' permet d'offrir des centaines d'hectares aux troupeaux. Les comportements grégaires naturels sont parfaitement respectés. Les zones piétonnes sont plus classiques mais en cours de modernisation.",
+                pros: ["Espaces immenses pour la faune de plaine", "Cohabitation naturelle des espèces"],
+                cons: ["Impact carbone du format 'safari automobile'"],
+                warning: null
             },
             {
                 id: 3,
-                type: "hors-ue",
-                category: "TRANSIT LOGISTIQUE",
-                title: "Régime de Transit (NSTI / T1)",
-                details: "Procédure douanière permettant de suspendre les droits et taxes pendant le transport frontalier.",
-                analysis: "Pour expédier de la marchandise en Suisse sans bloquer le camion à la douane frontalière, l'exportateur émet un document de transit T1 via le système NSTI. Le camion dédouane ainsi directement à l'intérieur du pays, chez le client final.",
-                docs: ["Document de Transit T1", "MRN"],
-                icon: "fa-truck-fast"
+                name: "Zoo de la Tête d'Or",
+                city: "Lyon",
+                lat: 45.7786, lng: 4.8532,
+                level: 2,
+                stars: "⭐⭐",
+                summary: "Parc urbain historique engagé dans une transition positive.",
+                analysis: "La plaine africaine démontre une vraie volonté de bien-être. Le parc fait face à des défis architecturaux historiques (installations anciennes), mais les équipes déploient de vrais efforts d'enrichissement au quotidien.",
+                pros: ["Entrée gratuite (pédagogie inclusive)", "Bonne présence vétérinaire", "Efforts d'enrichissement"],
+                cons: ["Contraintes spatiales urbaines", "Installations historiques à moderniser"],
+                warning: null
+            },
+            {
+                id: 4,
+                name: "Ménagerie du Jardin des Plantes",
+                city: "Paris",
+                lat: 48.8443, lng: 2.3601,
+                level: 1,
+                stars: "⭐",
+                summary: "Institution historique initiant sa réflexion sur le bien-être animal moderne.",
+                analysis: "Situé au cœur de Paris, le parc fait face à des contraintes spatiales extrêmes. Ce label salue les premières initiatives visant à réorienter la collection vers des espèces de plus petite taille, mieux adaptées à cet espace classé.",
+                pros: ["Architecture historique préservée", "Programmes d'élevage spécifiques", "Potentiel pédagogique fort"],
+                cons: ["Espaces très restreints pour la grande faune", "Proximité importante avec le public"],
+                warning: "Nous encourageons la poursuite de la transition vers des espèces nécessitant de plus petits territoires."
             }
         ];
 
         // ==========================================
-        // DONNÉES - STRATÉGIE
+        // DESIGN SYSTEM DES NIVEAUX (Constructifs et RSE)
         // ==========================================
-        const strategyData = [
-            { zone: "Espace Schengen (UE)", countries: "Allemagne, Italie, Benelux...", difficulty: "Faible", cost: "Faible", time: "Fluide", pros: ["Absence de douane", "Harmonisation SPS"], cons: ["Concurrence intense", "Traduction packaging"], color: "green" },
-            { zone: "Schengen (Hors-UE)", countries: "Suisse, Norvège, Islande", difficulty: "Modérée", cost: "Moyen", time: "Moyen", pros: ["Pouvoir d'achat attractif", "Demande terroir"], cons: ["Déclaration douane", "Régime T1", "Taxes à l'import"], color: "yellow" },
-            { zone: "Pays Tiers (BTOM)", countries: "Royaume-Uni", difficulty: "Élevée", cost: "Élevé", time: "Incertain", pros: ["Marché volumineux"], cons: ["Coûts EHC et BCP", "Lourdeur IPAFFS"], color: "red" }
-        ];
-
-        // ==========================================
-        // DONNÉES - GLOSSAIRE
-        // ==========================================
-        const glossaryData = [
-            { term: "EORI", fullName: "Economic Operators Registration and Identification", category: "Douane", definition: "Numéro d'immatriculation douanière unique attribué aux entreprises pour interagir avec les douanes de l'UE et du UK.", icon: "fa-id-card", color: "blue" },
-            { term: "REX", fullName: "Registered Exporter System", category: "Douane", definition: "Statut permettant d'auto-certifier l'origine européenne des marchandises sur la facture.", icon: "fa-file-signature", color: "blue" },
-            { term: "IPAFFS", fullName: "Import of Products, Animals, Food and Feed System", category: "Sanitaire", definition: "Système britannique unique obligatoire pour pré-notifier l'arrivée de produits sanitaires (SPS) au UK.", icon: "fa-desktop", color: "green" },
-            { term: "PEACH", fullName: "Procedure for Electronic Application", category: "Sanitaire", definition: "Ancien système britannique pour les végétaux, remplacé par IPAFFS. Terme obsolète.", icon: "fa-seedling-slash", color: "slate" },
-            { term: "SPS", fullName: "Sanitaire et Phytosanitaire", category: "Réglementation", definition: "Règles et contrôles visant à protéger la santé humaine, animale et végétale lors d'échanges.", icon: "fa-shield-halved", color: "red" },
-            { term: "EHC", fullName: "Export Health Certificate", category: "Sanitaire", definition: "Certificat sanitaire officiel signé par un vétérinaire de la DDPP pour exporter des produits animaux.", icon: "fa-notes-medical", color: "green" },
-            { term: "DDPP", fullName: "Direction Départementale de la Protection des Populations", category: "Institution", definition: "Services vétérinaires de l'État français délivrant les EHC.", icon: "fa-building-shield", color: "slate" },
-            { term: "MRN", fullName: "Movement Reference Number", category: "Douane", definition: "Numéro de suivi douanier (code-barres) prouvant qu'une déclaration a été enregistrée.", icon: "fa-barcode", color: "blue" },
-            { term: "GVMS", fullName: "Goods Vehicle Movement Service", category: "Transport", definition: "Système informatique douanier UK gérant les flux logistiques aux frontières.", icon: "fa-server", color: "amber" },
-            { term: "GMR", fullName: "Goods Movement Reference", category: "Transport", definition: "Code-barres unique généré par GVMS regroupant les MRN d'un camion pour embarquer sur le ferry.", icon: "fa-truck-fast", color: "amber" },
-            { term: "BCP", fullName: "Border Control Post", category: "Contrôle", definition: "Poste Frontalier britannique (ex: Sevington) où les camions subissent les contrôles SPS physiques.", icon: "fa-magnifying-glass-location", color: "red" },
-            { term: "BTOM", fullName: "Border Target Operating Model", category: "Réglementation", definition: "Modèle post-Brexit du UK classant les produits selon 3 niveaux de risque pour cibler les contrôles.", icon: "fa-scale-balanced", color: "slate" },
-            { term: "EMEBI", fullName: "État Récapitulatif Mensuel des Échanges", category: "Fiscalité", definition: "Déclaration statistique obligatoire (remplaçant la DEB) pour les flux au sein de l'UE.", icon: "fa-chart-pie", color: "blue" },
-            { term: "NSTI", fullName: "Nouveau Système de Transit Informatisé", category: "Douane", definition: "Système européen de gestion des déclarations de transit (T1).", icon: "fa-network-wired", color: "blue" },
-            { term: "T1", fullName: "Document de Transit Externe", category: "Transport", definition: "Régime permettant de traverser une frontière (ex: Suisse) en suspendant le paiement des taxes.", icon: "fa-route", color: "amber" },
-            { term: "HACCP", fullName: "Hazard Analysis Critical Control Point", category: "Réglementation", definition: "Méthode de maîtrise de la sécurité sanitaire (Paquet Hygiène) reconnue dans toute l'UE.", icon: "fa-hand-sparkles", color: "green" }
-        ];
+        const levelConfig = {
+            4: { colorClass: "bg-emerald-600", textClass: "text-emerald-600", icon: "fa-award", title: "Excellence" },
+            3: { colorClass: "bg-lime-500", textClass: "text-lime-600", icon: "fa-leaf", title: "Engagé" },
+            2: { colorClass: "bg-amber-500", textClass: "text-amber-500", icon: "fa-arrows-rotate", title: "En Transition" },
+            1: { colorClass: "bg-blue-500", textClass: "text-blue-500", icon: "fa-seedling", title: "En Développement" }
+        };
 
         // ==========================================
         // COMPOSANTS COMMUNS
@@ -159,63 +115,92 @@
         const Navigation = ({ activeTab, setTab }) => (
             <div className="bg-white shadow-sm sticky top-0 z-40 border-b border-slate-200">
                 <div className="max-w-6xl mx-auto px-4">
-                    <div className="flex space-x-1 md:space-x-8 overflow-x-auto custom-scroll">
-                        {/* On passe "true" à setTab pour le glossaire afin de réinitialiser la recherche si on clique manuellement sur l'onglet */}
-                        <button onClick={() => setTab('home')} className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${activeTab === 'home' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}><i className="fa-solid fa-house mr-2"></i>Accueil</button>
-                        <button onClick={() => setTab('uk')} className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${activeTab === 'uk' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}><i className="fa-solid fa-flag-checkered mr-2"></i>Royaume-Uni</button>
-                        <button onClick={() => setTab('schengen')} className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${activeTab === 'schengen' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}><i className="fa-solid fa-circle-nodes mr-2"></i>Schengen & UE</button>
-                        <button onClick={() => setTab('strategy')} className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${activeTab === 'strategy' ? 'border-amber-500 text-amber-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}><i className="fa-solid fa-scale-balanced mr-2"></i>Recommandations</button>
-                        <button onClick={() => setTab('glossary', true)} className={`py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${activeTab === 'glossary' ? 'border-purple-600 text-purple-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}><i className="fa-solid fa-book-open mr-2"></i>Glossaire</button>
+                    <div className="flex space-x-2 md:space-x-8 overflow-x-auto custom-scroll">
+                        {[
+                            { id: 'home', icon: 'fa-house', label: 'Accueil' },
+                            { id: 'map', icon: 'fa-map-location-dot', label: 'La Carte' },
+                            { id: 'project', icon: 'fa-bullseye', label: 'Le Projet' },
+                            { id: 'grid', icon: 'fa-clipboard-check', label: 'La Grille' }
+                        ].map(tab => (
+                            <button 
+                                key={tab.id}
+                                onClick={() => setTab(tab.id)}
+                                className={`py-4 px-3 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 whitespace-nowrap 
+                                    ${activeTab === tab.id ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                            >
+                                <i className={`fa-solid ${tab.icon}`}></i> {tab.label}
+                            </button>
+                        ))}
                     </div>
                 </div>
             </div>
         );
 
-        const Modal = ({ data, onClose, onNavigateGlossary }) => {
-            if (!data) return null;
+        const Modal = ({ zoo, onClose }) => {
+            if (!zoo) return null;
+            
+            const theme = levelConfig[zoo.level];
+
             return (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in" onClick={onClose}>
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
-                        <div className="bg-slate-900 p-8 text-white relative flex-shrink-0">
-                            <div className="absolute top-0 right-0 p-32 bg-blue-600 rounded-full blur-3xl opacity-20 -mr-16 -mt-16"></div>
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden" onClick={e => e.stopPropagation()}>
+                        
+                        <div className="bg-slate-900 p-8 text-white relative overflow-hidden">
+                            <div className={`absolute top-0 right-0 p-32 ${theme.colorClass} rounded-full blur-3xl opacity-20 -mr-16 -mt-16`}></div>
                             <button onClick={onClose} className="absolute top-6 right-6 text-slate-400 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center">
                                 <i className="fa-solid fa-xmark text-lg"></i>
                             </button>
                             <div className="relative z-10">
                                 <div className="flex items-center gap-3 mb-3">
-                                    <span className="bg-blue-600 px-3 py-1 rounded-full text-xs font-bold tracking-wider">{data.time || "FOCUS"}</span>
-                                    <span className="text-slate-300 text-xs font-bold uppercase tracking-wider">{data.category}</span>
+                                    <span className={`${theme.colorClass} px-3 py-1 rounded-full text-xs font-bold tracking-wider shadow-sm`}>
+                                        {zoo.city}
+                                    </span>
+                                    <span className="text-amber-400 text-lg tracking-widest">{zoo.stars}</span>
+                                    <span className="text-white/80 text-xs uppercase font-bold ml-2">Label : {theme.title}</span>
                                 </div>
-                                <h2 className="text-3xl font-bold mb-2"><TextWithGlossaryLinks text={data.title} onNavigate={onNavigateGlossary} /></h2>
-                                <p className="text-slate-300 text-sm"><TextWithGlossaryLinks text={data.details} onNavigate={onNavigateGlossary} /></p>
+                                <h2 className="text-3xl font-bold mb-2">{zoo.name}</h2>
+                                <p className="text-slate-300 text-sm">{zoo.summary}</p>
                             </div>
                         </div>
-                        <div className="p-8 overflow-y-auto custom-scroll bg-slate-50 flex-grow">
-                            {data.sender && (
-                                <div className="flex items-center justify-between bg-white p-5 rounded-xl border border-slate-200 shadow-sm mb-8">
-                                    <div className="text-center w-1/3"><div className="text-[10px] text-slate-400 font-bold uppercase mb-1">Émetteur</div><div className="text-sm font-bold text-slate-800"><TextWithGlossaryLinks text={data.sender} onNavigate={onNavigateGlossary} /></div></div>
-                                    <div className="flex-1 flex justify-center text-slate-300"><i className="fa-solid fa-arrow-right-long text-xl"></i></div>
-                                    <div className="text-center w-1/3"><div className="text-[10px] text-slate-400 font-bold uppercase mb-1">Destinataire</div><div className="text-sm font-bold text-blue-600"><TextWithGlossaryLinks text={data.receiver} onNavigate={onNavigateGlossary} /></div></div>
-                                </div>
-                            )}
-                            <div className="grid md:grid-cols-2 gap-8 mb-8">
+
+                        <div className="p-8 overflow-y-auto max-h-[60vh] custom-scroll bg-slate-50">
+                            <div className="mb-6">
+                                <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center">
+                                    <i className="fa-solid fa-magnifying-glass text-emerald-600 mr-2"></i> Synthèse de l'évaluation
+                                </h3>
+                                <p className="text-sm text-slate-600 leading-relaxed text-justify">{zoo.analysis}</p>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-6 mb-6">
                                 <div>
-                                    <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center"><i className="fa-solid fa-magnifying-glass text-blue-600 mr-2"></i> Analyse Réglementaire</h3>
-                                    <p className="text-sm text-slate-600 leading-relaxed text-justify"><TextWithGlossaryLinks text={data.analysis} onNavigate={onNavigateGlossary} /></p>
-                                </div>
-                                <div>
-                                    <h3 className="text-sm font-bold text-slate-800 mb-3">Documents Requis</h3>
+                                    <h4 className="text-xs font-bold text-emerald-700 uppercase mb-2"><i className="fa-solid fa-plus mr-1"></i> Initiatives Positives</h4>
                                     <ul className="space-y-2">
-                                        {data.docs.map((doc, i) => (
-                                            <li key={i} className="flex items-center gap-2 p-2 bg-white rounded border border-slate-200 text-sm shadow-sm"><i className="fa-solid fa-file-contract text-blue-500"></i><span className="font-medium text-slate-700"><TextWithGlossaryLinks text={doc} onNavigate={onNavigateGlossary} /></span></li>
+                                        {zoo.pros.map((pro, i) => (
+                                            <li key={i} className="text-sm text-slate-600 bg-emerald-50 p-2 rounded border border-emerald-100 flex items-start gap-2">
+                                                <i className="fa-solid fa-check text-emerald-500 mt-1"></i> <span>{pro}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4 className="text-xs font-bold text-slate-600 uppercase mb-2"><i className="fa-solid fa-arrow-trend-up mr-1"></i> Pistes d'Amélioration</h4>
+                                    <ul className="space-y-2">
+                                        {zoo.cons.map((con, i) => (
+                                            <li key={i} className="text-sm text-slate-600 bg-white p-2 rounded border border-slate-200 flex items-start gap-2">
+                                                <i className="fa-solid fa-circle-dot text-slate-400 mt-1 text-[10px]"></i> <span>{con}</span>
+                                            </li>
                                         ))}
                                     </ul>
                                 </div>
                             </div>
-                            {data.warning && (
-                                <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-xl flex items-start gap-4">
-                                    <div className="bg-amber-100 text-amber-600 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"><i className="fa-solid fa-triangle-exclamation text-lg"></i></div>
-                                    <div><h4 className="font-bold text-amber-900 text-sm uppercase mb-1">Point de Vigilance</h4><p className="text-sm text-amber-800"><TextWithGlossaryLinks text={data.warning} onNavigate={onNavigateGlossary} /></p></div>
+
+                            {zoo.warning && (
+                                <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-xl flex items-start gap-4 mt-4">
+                                    <i className="fa-solid fa-lightbulb text-blue-500 text-xl mt-1"></i>
+                                    <div>
+                                        <h4 className="font-bold text-blue-900 text-sm uppercase mb-1">Encouragement RSE</h4>
+                                        <p className="text-sm text-blue-800">{zoo.warning}</p>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -224,264 +209,239 @@
             );
         };
 
-        // --- PAGE 1: UK ---
-        const UKPage = ({ setSelectedStep, onNavigateGlossary }) => {
-            const [filter, setFilter] = useState('all');
-            const filteredData = ukTimelineData.filter(item => filter === 'all' ? true : item.type === filter);
+        // ==========================================
+        // PAGES DE L'APPLICATION
+        // ==========================================
 
-            const DetailedTimelineItem = ({ step, index }) => {
-                const isLeft = index % 2 === 0;
-                const TextContent = () => (
-                    <div className={`flex flex-col justify-center ${isLeft ? 'items-end text-right pr-12' : 'items-start text-left pl-12'}`}>
-                        <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                            {isLeft ? <>{step.time} <i className="fa-regular fa-clock"></i></> : <><i className="fa-regular fa-clock"></i> {step.time}</>}
+        const HomePage = ({ setTab }) => (
+            <div className="animate-fade-in flex-1">
+                <div className="relative bg-slate-900 overflow-hidden">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-emerald-900 via-slate-900 to-black opacity-80"></div>
+                    <div className="relative max-w-5xl mx-auto px-4 py-24 text-center">
+                        <div className="inline-block mb-6 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-emerald-200 text-sm font-semibold backdrop-blur-sm">
+                            Projet Étudiant RSE - 2026
                         </div>
-                        <h3 className="text-2xl font-bold text-slate-800 mb-2 group-hover:text-blue-600 transition-colors"><TextWithGlossaryLinks text={step.title} onNavigate={onNavigateGlossary} /></h3>
-                        <p className="text-sm text-slate-500 leading-relaxed max-w-sm font-medium"><TextWithGlossaryLinks text={step.details} onNavigate={onNavigateGlossary} /></p>
-                        <button className="mt-4 text-xs font-bold bg-blue-50 text-blue-600 px-4 py-2 rounded-full border border-blue-100 group-hover:bg-blue-600 group-hover:text-white transition-all flex items-center gap-2">Voir l'analyse <i className="fa-solid fa-arrow-right"></i></button>
+                        <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+                            Label Voix Animale<br/>
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">
+                                L'éthique en mouvement.
+                            </span>
+                        </h1>
+                        <p className="text-slate-300 text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
+                            Notre mission : valoriser les parcs zoologiques français engagés et accompagner la transition de ceux en plein développement, pour un bien-être animal optimal.
+                        </p>
+                        <button onClick={() => setTab('map')} className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-4 rounded-full font-bold shadow-lg shadow-emerald-500/30 transition-all transform hover:-translate-y-1">
+                            Découvrir la Carte <i className="fa-solid fa-arrow-right ml-2"></i>
+                        </button>
                     </div>
-                );
-                const CardContent = () => (
-                    <div className={`relative ${isLeft ? 'pl-12' : 'pr-12'} flex ${isLeft ? 'justify-start' : 'justify-end'}`}>
-                        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 w-full max-w-sm group-hover:shadow-lg group-hover:border-blue-300 group-hover:-translate-y-1 transition-all">
-                            <div className="flex justify-between items-center mb-4 border-b border-slate-50 pb-3">
-                                <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wide">{step.category}</span>
-                                <div className="flex items-center gap-2"><div className="text-[10px] text-slate-400 font-bold uppercase text-right">Responsable</div><div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs"><i className="fa-solid fa-user"></i></div></div>
-                            </div>
-                            <div className="mb-3">
-                                <div className="text-xs font-bold text-slate-400 uppercase mb-2">Documents Clés</div>
-                                <div className="flex flex-wrap gap-2">{step.docs.map((doc, i) => (<span key={i} className="text-xs font-medium text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-100 flex items-center"><i className="fa-regular fa-file-lines mr-1 text-slate-400"></i> <TextWithGlossaryLinks text={doc} onNavigate={onNavigateGlossary} /></span>))}</div>
-                            </div>
-                        </div>
-                    </div>
-                );
-                return (
-                    <div className="relative flex items-center justify-between w-full mb-16 md:mb-24 cursor-pointer group fade-in" onClick={() => setSelectedStep(step)}>
-                        <div className="w-5/12">{isLeft ? <TextContent /> : <CardContent />}</div>
-                        <div className="w-2/12 flex justify-center relative z-10"><div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold shadow-xl border-4 border-slate-50 transition-all duration-300 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white ${step.warning ? 'bg-slate-800 text-white' : 'bg-slate-700 text-white'}`}>{index + 1}</div></div>
-                        <div className="w-5/12">{isLeft ? <CardContent /> : <TextContent />}</div>
-                    </div>
-                );
-            };
-
-            return (
-                <div className="animate-fade-in pb-20">
-                    <div className="bg-slate-900 text-white py-12 px-4 shadow-xl text-center relative overflow-hidden mb-12">
-                        <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-400 via-slate-900 to-black"></div>
-                        <div className="relative max-w-4xl mx-auto z-10">
-                            <h1 className="text-3xl md:text-5xl font-bold mb-6">Séquençage Royaume-Uni <span className="text-blue-400">(BTOM)</span></h1>
-                            <p className="text-slate-400 text-lg">Cliquez sur les étapes ou les termes violets pour voir les définitions.</p>
-                        </div>
-                    </div>
-                    <main className="max-w-6xl mx-auto px-4">
-                        <div className="relative py-8 min-h-[500px]">
-                            <div className="timeline-line-center hidden md:block"></div>
-                            <div className="hidden md:block">
-                                {filteredData.map((step, index) => <DetailedTimelineItem key={step.id} step={step} index={index} />)}
-                            </div>
-                        </div>
-                    </main>
                 </div>
-            );
-        };
-
-        // --- PAGE 2: SCHENGEN ---
-        const SchengenPage = ({ setSelectedStep, onNavigateGlossary }) => {
-            return (
-                <div className="animate-fade-in pb-20">
-                    <div className="bg-slate-800 text-white py-12 px-4 shadow-xl text-center relative overflow-hidden mb-16">
-                        <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-yellow-400 via-blue-900 to-black"></div>
-                        <div className="relative max-w-4xl mx-auto z-10">
-                            <div className="inline-block mb-4 px-4 py-1 rounded-full bg-yellow-400/20 border border-yellow-400/50 text-yellow-200 text-sm font-semibold">Distinction Juridique</div>
-                            <h1 className="text-3xl md:text-5xl font-bold mb-6">Espace Schengen & UE</h1>
-                            <p className="text-slate-300 text-lg max-w-2xl mx-auto">La différence fondamentale entre la libre circulation (Union Douanière) et les pays tiers membres de Schengen.</p>
-                        </div>
-                    </div>
-                    
-                    <div className="max-w-6xl mx-auto px-4">
-                        <div className="grid md:grid-cols-2 gap-8 mb-16">
-                            <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-r-xl shadow-sm">
-                                <h3 className="text-xl font-bold text-blue-900 mb-2"><i className="fa-solid fa-star text-yellow-500 mr-2"></i> Zone A : Union Douanière (UE)</h3>
-                                <p className="text-blue-800 text-sm mb-4 font-semibold">Allemagne, Italie, Espagne, Benelux...</p>
-                                <ul className="space-y-2 text-sm text-blue-700">
-                                    <li><i className="fa-solid fa-check mr-2"></i> Libre circulation totale des marchandises</li>
-                                    <li><i className="fa-solid fa-check mr-2"></i> Absence de déclarations douanières (<TextWithGlossaryLinks text="EMEBI" onNavigate={onNavigateGlossary} /> uniquement)</li>
-                                    <li><i className="fa-solid fa-check mr-2"></i> Reconnaissance mutuelle des agréments (Paquet Hygiène)</li>
-                                </ul>
+                
+                <div className="max-w-6xl mx-auto px-4 py-20 -mt-16 relative z-10">
+                    <div className="grid md:grid-cols-3 gap-8">
+                        <div onClick={() => setTab('map')} className="bg-white p-8 rounded-2xl shadow-xl border border-slate-100 hover:shadow-2xl transition-all cursor-pointer group hover:-translate-y-2">
+                            <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-3xl text-emerald-600 mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                                <i className="fa-solid fa-map-location-dot"></i>
                             </div>
-                            <div className="bg-slate-100 border-l-4 border-slate-600 p-6 rounded-r-xl shadow-sm">
-                                <h3 className="text-xl font-bold text-slate-900 mb-2"><i className="fa-solid fa-mountain text-slate-500 mr-2"></i> Zone B : Schengen non-UE</h3>
-                                <p className="text-slate-800 text-sm mb-4 font-semibold">Suisse, Norvège, Islande, Liechtenstein</p>
-                                <ul className="space-y-2 text-sm text-slate-700">
-                                    <li><i className="fa-solid fa-xmark mr-2 text-red-500"></i> Frontière douanière active (Droits et Taxes applicables)</li>
-                                    <li><i className="fa-solid fa-file-contract mr-2"></i> Déclarations d'exportation obligatoires</li>
-                                    <li><i className="fa-solid fa-road mr-2"></i> Régime de transit douanier (<TextWithGlossaryLinks text="T1" onNavigate={onNavigateGlossary} /> / <TextWithGlossaryLinks text="NSTI" onNavigate={onNavigateGlossary} />)</li>
-                                </ul>
-                            </div>
+                            <h3 className="text-2xl font-bold text-slate-800 mb-3">La Carte</h3>
+                            <p className="text-slate-500 mb-6">Explorez la carte interactive des zoos et découvrez leur niveau d'engagement dans notre label.</p>
                         </div>
                         
-                        <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8">
-                            {schengenData.map((item, idx) => (
-                                <div key={idx} onClick={() => setSelectedStep(item)} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 hover:shadow-xl hover:border-blue-400 hover:-translate-y-2 transition-all cursor-pointer group flex flex-col h-full">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl ${item.type === 'ue' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600'}`}><i className={`fa-solid ${item.icon}`}></i></div>
-                                        <span className={`text-xs font-bold px-3 py-1 rounded-full uppercase ${item.type === 'ue' ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-600'}`}>{item.category}</span>
-                                    </div>
-                                    <h3 className="font-bold text-2xl text-slate-800 mb-3 group-hover:text-blue-600 transition-colors"><TextWithGlossaryLinks text={item.title} onNavigate={onNavigateGlossary} /></h3>
-                                    <p className="text-slate-600 mb-6 flex-grow leading-relaxed"><TextWithGlossaryLinks text={item.details} onNavigate={onNavigateGlossary} /></p>
-                                    
-                                    {/* Nouveau bouton cliquable très visible */}
-                                    <div className="mt-auto w-full bg-slate-50 border border-slate-200 text-center py-3 rounded-lg text-sm font-bold text-slate-600 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-all shadow-sm flex items-center justify-center gap-2">
-                                        Voir l'analyse détaillée <i className="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
-                                    </div>
-                                </div>
-                            ))}
+                        <div onClick={() => setTab('project')} className="bg-white p-8 rounded-2xl shadow-xl border border-slate-100 hover:shadow-2xl transition-all cursor-pointer group hover:-translate-y-2">
+                            <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-3xl text-blue-600 mb-6 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                <i className="fa-solid fa-bullseye"></i>
+                            </div>
+                            <h3 className="text-2xl font-bold text-slate-800 mb-3">Notre Démarche</h3>
+                            <p className="text-slate-500 mb-6">Découvrez notre approche RSE bienveillante, axée sur l'encouragement et la transparence.</p>
                         </div>
-                    </div>
-                </div>
-            );
-        };
-
-        // --- PAGE 3: STRATÉGIE ---
-        const StrategyPage = () => (
-            <div className="animate-fade-in pb-20">
-                <div className="bg-slate-900 text-white py-12 px-4 shadow-xl text-center mb-12"><h1 className="text-3xl md:text-5xl font-bold">Recommandations Bo'Nature</h1></div>
-                <div className="max-w-6xl mx-auto px-4">
-                    <div className="overflow-x-auto bg-white rounded-xl shadow-sm border border-slate-200 mb-12">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 text-sm uppercase">
-                                    <th className="p-4">Marché Cible</th><th className="p-4">Complexité</th><th className="p-4">Avantages</th><th className="p-4">Contraintes</th>
-                                </tr>
-                            </thead>
-                            <tbody className="text-sm">
-                                {strategyData.map((row, idx) => (
-                                    <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
-                                        <td className="p-4 font-bold text-slate-800">{row.zone}<br/><span className="text-xs font-normal text-slate-500">{row.countries}</span></td>
-                                        <td className="p-4"><span className={`px-2 py-1 rounded text-xs font-bold ${row.color === 'green' ? 'bg-green-100 text-green-700' : row.color === 'yellow' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>{row.difficulty}</span></td>
-                                        <td className="p-4 text-green-700"><ul className="list-disc pl-4 space-y-1">{row.pros.map(p => <li key={p}>{p}</li>)}</ul></td>
-                                        <td className="p-4 text-red-600"><ul className="list-disc pl-4 space-y-1">{row.cons.map(c => <li key={c}>{c}</li>)}</ul></td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                        
+                        <div onClick={() => setTab('grid')} className="bg-white p-8 rounded-2xl shadow-xl border border-slate-100 hover:shadow-2xl transition-all cursor-pointer group hover:-translate-y-2">
+                            <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center text-3xl text-amber-500 mb-6 group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                                <i className="fa-solid fa-clipboard-list"></i>
+                            </div>
+                            <h3 className="text-2xl font-bold text-slate-800 mb-3">La Grille Globale</h3>
+                            <p className="text-slate-500 mb-6">Comprenez comment notre score global se traduit en 4 niveaux de labels constructifs.</p>
+                        </div>
                     </div>
                 </div>
             </div>
         );
 
-        // --- PAGE 4: GLOSSAIRE ---
-        const GlossaryPage = ({ searchQuery }) => {
-            const [searchTerm, setSearchTerm] = useState('');
-            
-            // Synchronise la barre de recherche avec le terme cliqué depuis une autre page
+        const MapPage = ({ setSelectedZoo }) => {
             useEffect(() => {
-                if (searchQuery) {
-                    setSearchTerm(searchQuery);
-                    window.scrollTo(0, 0); // Remonte en haut de la page
-                }
-            }, [searchQuery]);
+                const map = L.map('map-container').setView([46.603354, 1.888334], 6);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap'
+                }).addTo(map);
 
-            const filteredGlossary = glossaryData
-                .sort((a, b) => a.term.localeCompare(b.term))
-                .filter(item => 
-                    item.term.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                    item.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    item.definition.toLowerCase().includes(searchTerm.toLowerCase())
-                );
+                zoosData.forEach(zoo => {
+                    const theme = levelConfig[zoo.level];
+                    
+                    const customIcon = L.divIcon({
+                        className: 'custom-leaflet-icon',
+                        html: `
+                            <div class="relative flex items-center justify-center w-12 h-12">
+                                <div class="${theme.colorClass} w-10 h-10 rounded-full flex items-center justify-center text-white shadow-[0_5px_15px_rgba(0,0,0,0.3)] border-2 border-white hover:scale-110 transition-transform cursor-pointer">
+                                    <i class="fa-solid ${theme.icon} text-lg"></i>
+                                </div>
+                            </div>
+                        `,
+                        iconSize: [48, 48],
+                        iconAnchor: [24, 24],
+                        popupAnchor: [0, -20]
+                    });
 
-            const colorClasses = { blue: "bg-blue-50 text-blue-600 border-blue-200", green: "bg-green-50 text-green-600 border-green-200", red: "bg-red-50 text-red-600 border-red-200", amber: "bg-amber-50 text-amber-600 border-amber-200", slate: "bg-slate-100 text-slate-600 border-slate-200" };
-            const iconBgClasses = { blue: "bg-blue-100 text-blue-600", green: "bg-green-100 text-green-600", red: "bg-red-100 text-red-600", amber: "bg-amber-100 text-amber-600", slate: "bg-slate-200 text-slate-600" };
+                    const marker = L.marker([zoo.lat, zoo.lng], { icon: customIcon }).addTo(map);
+                    
+                    const popupContent = document.createElement('div');
+                    popupContent.className = "text-center p-1";
+                    popupContent.innerHTML = `
+                        <div class="font-bold text-slate-800 mb-1 text-sm">${zoo.name}</div>
+                        <div class="text-amber-500 mb-3 tracking-widest text-xs">${zoo.stars}</div>
+                        <button class="${theme.colorClass} text-white px-4 py-1.5 rounded-full text-xs font-bold w-full shadow-sm hover:opacity-90 transition-opacity">
+                            Voir le détail
+                        </button>
+                    `;
+                    
+                    popupContent.querySelector('button').onclick = () => setSelectedZoo(zoo);
+                    marker.bindPopup(popupContent);
+                });
+
+                return () => map.remove();
+            }, []);
 
             return (
-                <div className="animate-fade-in pb-20">
-                    <div className="bg-slate-900 text-white py-12 px-4 shadow-xl text-center relative overflow-hidden mb-12">
-                        <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[radial-gradient(circle_at_top_left,_var(--tw-gradient-stops))] from-purple-500 via-slate-900 to-black"></div>
-                        <div className="relative max-w-4xl mx-auto z-10">
-                            <h1 className="text-3xl md:text-5xl font-bold mb-8">Le <span className="text-purple-400">Glossaire</span> de l'Exportateur</h1>
-                            <div className="relative max-w-lg mx-auto">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><i className="fa-solid fa-magnifying-glass text-slate-400"></i></div>
-                                <input type="text" placeholder="Rechercher un terme (ex: EORI)..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-11 pr-4 py-4 rounded-full bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white/20 transition-all shadow-inner backdrop-blur-sm" />
-                                {searchTerm && (
-                                    <button onClick={() => setSearchTerm('')} className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-white transition-colors"><i className="fa-solid fa-xmark"></i></button>
-                                )}
-                            </div>
+                <div className="animate-fade-in max-w-6xl mx-auto px-4 py-12">
+                    <div className="text-center mb-10">
+                        <h2 className="text-3xl font-bold text-slate-800 mb-4">Carte des Parcs Accompagnés</h2>
+                        <p className="text-slate-500 max-w-2xl mx-auto mb-8">Cliquez sur les bulles pour consulter le niveau d'engagement RSE actuel de chaque structure.</p>
+                        
+                        <div className="flex flex-wrap justify-center gap-4 text-xs font-bold">
+                            <span className="flex items-center gap-2 px-3 py-1 bg-white rounded-full shadow-sm border border-slate-100"><span className="w-3 h-3 rounded-full bg-emerald-600"></span> 4 - Excellence</span>
+                            <span className="flex items-center gap-2 px-3 py-1 bg-white rounded-full shadow-sm border border-slate-100"><span className="w-3 h-3 rounded-full bg-lime-500"></span> 3 - Engagé</span>
+                            <span className="flex items-center gap-2 px-3 py-1 bg-white rounded-full shadow-sm border border-slate-100"><span className="w-3 h-3 rounded-full bg-amber-500"></span> 2 - En Transition</span>
+                            <span className="flex items-center gap-2 px-3 py-1 bg-white rounded-full shadow-sm border border-slate-100"><span className="w-3 h-3 rounded-full bg-blue-500"></span> 1 - En Développement</span>
                         </div>
                     </div>
 
-                    <div className="max-w-6xl mx-auto px-4">
-                        {filteredGlossary.length === 0 ? (
-                            <div className="text-center py-20 bg-white rounded-2xl border border-slate-200 shadow-sm"><i className="fa-solid fa-ghost text-4xl text-slate-300 mb-4"></i><h3 className="text-xl font-bold text-slate-700">Aucun terme trouvé</h3></div>
-                        ) : (
-                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {filteredGlossary.map((item, idx) => (
-                                    <div key={idx} className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-lg hover:-translate-y-1 hover:border-purple-300 transition-all group flex flex-col h-full">
-                                        <div className="flex justify-between items-start mb-4">
-                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-sm ${iconBgClasses[item.color]}`}><i className={`fa-solid ${item.icon}`}></i></div>
-                                            <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wide border ${colorClasses[item.color]}`}>{item.category}</span>
-                                        </div>
-                                        <h3 className="font-bold text-xl text-slate-800 mb-1">{item.term}</h3>
-                                        <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-4 min-h-[2rem]">{item.fullName}</div>
-                                        <p className="text-sm text-slate-600 leading-relaxed flex-grow">{item.definition}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                    <div className="bg-white p-2 md:p-4 rounded-3xl shadow-xl border border-slate-200 mb-12">
+                        <div id="map-container" className="w-full h-[600px] z-10"></div>
                     </div>
                 </div>
             );
         };
 
-        // --- PAGE 0: HOME ---
-        const HomePage = ({ setTab }) => (
-            <div className="animate-fade-in flex-1 bg-slate-50">
-                <div className="relative bg-slate-900 py-24 text-center overflow-hidden mb-16">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-blue-900 via-slate-900 to-black opacity-80"></div>
-                    <div className="relative max-w-5xl mx-auto px-4 z-10">
-                        <div className="inline-block mb-6 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-blue-200 text-sm font-semibold backdrop-blur-sm">Projet Étudiant - Synthèse 2026</div>
-                        <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">Stratégie & Réglementation Export<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">Du terroir savoyard à l'international</span></h1>
-                        <button onClick={() => setTab('strategy')} className="mt-8 bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-full font-bold shadow-lg shadow-blue-500/30 transition-all hover:-translate-y-1">Découvrir nos recommandations</button>
+        const ProjectPage = () => (
+            <div className="animate-fade-in max-w-4xl mx-auto px-4 py-12">
+                <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-slate-100">
+                    <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-4xl mb-6 mx-auto">
+                        <i className="fa-solid fa-bullseye"></i>
                     </div>
+                    <h2 className="text-3xl md:text-4xl font-bold text-slate-800 text-center mb-8">Notre Philosophie d'Action</h2>
+                    
+                    <div className="space-y-8 text-slate-600 leading-relaxed text-lg">
+                        <p>
+                            "Label Voix Animale" est un projet étudiant profondément ancré dans la <strong>Responsabilité Sociétale des Entreprises (RSE)</strong>. Face aux attentes sociétales concernant le bien-être animal, notre rôle n'est pas de juger, mais d'accompagner.
+                        </p>
+                        
+                        <div className="border-l-4 border-blue-500 pl-6 py-4 bg-blue-50 rounded-r-xl">
+                            <h3 className="text-xl font-bold text-blue-900 mb-2">Accompagner plutôt que punir</h3>
+                            <p className="text-blue-800 text-base">
+                                Nous savons que la gestion d'un parc zoologique est complexe et que les héritages architecturaux sont lourds. Notre label vise à <strong>valoriser les efforts</strong>, mettre en lumière les bonnes pratiques, et encourager de manière constructive les structures qui entament leur modernisation.
+                            </p>
+                        </div>
+
+                        <p>
+                            En proposant une évaluation transparente basée sur un score global, nous offrons au public une clé de lecture claire, tout en fournissant aux parcs un retour neutre pour soutenir leur politique de développement durable.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const GridPage = () => (
+            <div className="animate-fade-in max-w-5xl mx-auto px-4 py-12">
+                <div className="text-center mb-12">
+                    <h2 className="text-3xl font-bold text-slate-800 mb-4">La Grille d'Évaluation Globale</h2>
+                    <p className="text-slate-500 max-w-3xl mx-auto">
+                        Notre label repose sur un système de <strong>score global</strong> calculé à l'aide d'une grille multicritères rigoureuse (Espace, Alimentation, Comportement, etc.). En fonction de la note finale obtenue, le parc se voit attribuer l'un de nos 4 niveaux d'engagement.
+                    </p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                    {/* Niveau 4 */}
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-8 border-l-emerald-600 hover:shadow-md transition-shadow">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="text-emerald-600 text-2xl"><i className="fa-solid fa-award"></i></div>
+                            <h3 className="font-bold text-xl text-slate-800">Niveau 4 : Excellence</h3>
+                        </div>
+                        <div className="text-amber-400 mb-3 tracking-widest">⭐⭐⭐⭐</div>
+                        <p className="text-slate-600 text-sm">Le bien-être animal est au cœur de l'ADN du parc. Les espaces sont immersifs, favorisent l'expression de tous les comportements naturels, et le parc agit comme un acteur majeur de la conservation in-situ.</p>
+                    </div>
+
+                    {/* Niveau 3 */}
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-8 border-l-lime-500 hover:shadow-md transition-shadow">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="text-lime-500 text-2xl"><i className="fa-solid fa-leaf"></i></div>
+                            <h3 className="font-bold text-xl text-slate-800">Niveau 3 : Engagé</h3>
+                        </div>
+                        <div className="text-amber-400 mb-3 tracking-widest">⭐⭐⭐</div>
+                        <p className="text-slate-600 text-sm">Le parc fait preuve d'un engagement très solide pour la majorité de ses pensionnaires. L'alimentation, les soins et l'espace répondent à des standards élevés et récents.</p>
+                    </div>
+
+                    {/* Niveau 2 */}
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-8 border-l-amber-500 hover:shadow-md transition-shadow">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="text-amber-500 text-2xl"><i className="fa-solid fa-arrows-rotate"></i></div>
+                            <h3 className="font-bold text-xl text-slate-800">Niveau 2 : En Transition</h3>
+                        </div>
+                        <div className="text-amber-400 mb-3 tracking-widest">⭐⭐</div>
+                        <p className="text-slate-600 text-sm">Une dynamique positive est en cours. Le parc investit pour moderniser ses installations historiques. Les équipes vétérinaires et soignantes déploient de réels efforts pour pallier certaines contraintes matérielles.</p>
+                    </div>
+
+                    {/* Niveau 1 */}
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-8 border-l-blue-500 hover:shadow-md transition-shadow">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="text-blue-500 text-2xl"><i className="fa-solid fa-seedling"></i></div>
+                            <h3 className="font-bold text-xl text-slate-800">Niveau 1 : En Développement</h3>
+                        </div>
+                        <div className="text-amber-400 mb-3 tracking-widest">⭐</div>
+                        <p className="text-slate-600 text-sm">Le parc montre un intérêt naissant pour les standards modernes du bien-être animal, mais fait face à des contraintes fortes (spatiales ou historiques). Ce label encourage vivement la restructuration et l'initiation de nouvelles pratiques.</p>
+                    </div>
+                </div>
+                
+                <div className="mt-12 p-6 bg-slate-100 rounded-xl text-center border border-slate-200 border-dashed">
+                    <p className="text-slate-500 font-medium"><i className="fa-solid fa-calculator mr-2"></i> Le détail des critères qui composent le calcul de la note globale sera publié prochainement.</p>
                 </div>
             </div>
         );
 
         // ==========================================
-        // APP PRINCIPALE
+        // APPLICATION PRINCIPALE
         // ==========================================
         const App = () => {
             const [activeTab, setActiveTab] = useState('home');
-            const [selectedStep, setSelectedStep] = useState(null);
-            const [glossarySearchQuery, setGlossarySearchQuery] = useState('');
-
-            // Fonction déclenchée quand on clique sur un mot violet dans le texte
-            const handleNavigateGlossary = (term) => {
-                setGlossarySearchQuery(term);
-                setActiveTab('glossary');
-                setSelectedStep(null); // Ferme la modale automatiquement
-            };
-
-            // Gère le changement d'onglet manuel (reset la barre de recherche du glossaire si on clique sur le bouton)
-            const handleTabChange = (tab, resetSearch = false) => {
-                setActiveTab(tab);
-                if (resetSearch) setGlossarySearchQuery('');
-            };
+            const [selectedZoo, setSelectedZoo] = useState(null);
 
             return (
-                <div className="min-h-screen pb-20 font-sans bg-slate-50">
-                    <Navigation activeTab={activeTab} setTab={handleTabChange} />
+                <div className="min-h-screen flex flex-col font-sans">
+                    <Navigation activeTab={activeTab} setTab={setActiveTab} />
                     
-                    {activeTab === 'home' && <HomePage setTab={handleTabChange} />}
-                    {activeTab === 'uk' && <UKPage setSelectedStep={setSelectedStep} onNavigateGlossary={handleNavigateGlossary} />}
-                    {activeTab === 'schengen' && <SchengenPage setSelectedStep={setSelectedStep} onNavigateGlossary={handleNavigateGlossary} />}
-                    {activeTab === 'strategy' && <StrategyPage />}
-                    {activeTab === 'glossary' && <GlossaryPage searchQuery={glossarySearchQuery} />}
-                    
-                    <footer className="bg-slate-900 text-slate-400 mt-0 py-12 text-center border-t border-slate-800">
-                        <div className="max-w-4xl mx-auto px-4"><p className="font-bold text-white mb-2">Référentiel Stratégique & Réglementaire 2026</p><p className="text-sm">Projet Étudiant</p></div>
+                    <main className="flex-grow">
+                        {activeTab === 'home' && <HomePage setTab={setActiveTab} />}
+                        {activeTab === 'map' && <MapPage setSelectedZoo={setSelectedZoo} />}
+                        {activeTab === 'project' && <ProjectPage />}
+                        {activeTab === 'grid' && <GridPage />}
+                    </main>
+
+                    <footer className="bg-slate-900 text-slate-400 py-8 text-center border-t border-slate-800 mt-12">
+                        <div className="max-w-4xl mx-auto px-4">
+                            <p className="font-bold text-emerald-500 mb-2"><i className="fa-solid fa-paw mr-2"></i>Label Voix Animale</p>
+                            <p className="text-sm">Projet Étudiant RSE © 2026. Une démarche constructive pour le bien-être animal.</p>
+                        </div>
                     </footer>
                     
-                    <Modal data={selectedStep} onClose={() => setSelectedStep(null)} onNavigateGlossary={handleNavigateGlossary} />
+                    <Modal zoo={selectedZoo} onClose={() => setSelectedZoo(null)} />
                 </div>
             );
         };
