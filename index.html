@@ -4,75 +4,63 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Label Voix Animale – Projet RSE</title>
-
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,700;1,500&family=Nunito+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-
     <style>
-        :root { --c-green: #16a34a; --c-dark: #0f172a; }
-        body  { font-family: 'Nunito Sans', sans-serif; }
-        .font-display { font-family: 'Lora', serif; }
-
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-
-        @keyframes fadeUp  { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
-        @keyframes scaleIn { from { opacity:0; transform:scale(.96); } to { opacity:1; transform:scale(1); } }
-        .fade-up  { animation: fadeUp  .45s ease both; }
-        .fade-in  { animation: fadeIn  .3s  ease both; }
-        .scale-in { animation: scaleIn .35s ease both; }
-
-        .stagger-1 { animation-delay:.05s; }
-        .stagger-2 { animation-delay:.10s; }
-        .stagger-3 { animation-delay:.15s; }
-        .stagger-4 { animation-delay:.20s; }
-        .stagger-5 { animation-delay:.25s; }
-        .stagger-6 { animation-delay:.30s; }
-
-        #map-container { border-radius: .75rem; }
-        .leaflet-container { font-family: 'Nunito Sans', sans-serif; }
-        .custom-leaflet-icon { background: transparent; border: none; }
-
-        .tab-btn { transition: all .2s; }
-        .bar-track { background: #e2e8f0; border-radius:9999px; overflow:hidden; height:8px; }
-        .bar-fill  { height:100%; border-radius:9999px; transition: width 1s cubic-bezier(.22,1,.36,1); }
-
-        .crit-row { transition: background .15s; }
-        .crit-row:hover { background: #f8fafc; }
-        .accordion-body { animation: fadeUp .25s ease both; }
+        :root{--c-green:#16a34a;--c-dark:#0f172a}
+        body{font-family:'Nunito Sans',sans-serif}
+        .font-display{font-family:'Lora',serif}
+        .custom-scroll::-webkit-scrollbar{width:6px}
+        .custom-scroll::-webkit-scrollbar-track{background:transparent}
+        .custom-scroll::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        @keyframes scaleIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+        .fade-up{animation:fadeUp .45s ease both}
+        .fade-in{animation:fadeIn .3s ease both}
+        .scale-in{animation:scaleIn .35s ease both}
+        .s1{animation-delay:.05s}.s2{animation-delay:.10s}.s3{animation-delay:.15s}
+        .s4{animation-delay:.20s}.s5{animation-delay:.25s}.s6{animation-delay:.30s}
+        .s7{animation-delay:.35s}.s8{animation-delay:.40s}.s9{animation-delay:.45s}
+        .s10{animation-delay:.50s}.s11{animation-delay:.55s}.s12{animation-delay:.60s}
+        #map-container{border-radius:.75rem}
+        .leaflet-container{font-family:'Nunito Sans',sans-serif}
+        .custom-leaflet-icon{background:transparent;border:none}
+        .tab-btn{transition:all .2s}
+        .bar-track{background:#e2e8f0;border-radius:9999px;overflow:hidden;height:8px}
+        .bar-fill{height:100%;border-radius:9999px;transition:width 1s cubic-bezier(.22,1,.36,1)}
+        .crit-row{transition:background .15s}
+        .crit-row:hover{background:#f8fafc}
+        .accordion-body{animation:fadeUp .25s ease both}
+        .zoo-card{transition:all .25s cubic-bezier(.22,1,.36,1)}
+        .zoo-card:hover{transform:translateY(-4px);box-shadow:0 20px 40px -12px rgba(0,0,0,.15)}
+        .leaflet-tooltip-custom{font-family:'Nunito Sans',sans-serif;font-size:12px;padding:6px 10px;border-radius:10px;border:none;box-shadow:0 4px 12px rgba(0,0,0,.15)}
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
 <div id="root"></div>
-
 <script type="text/babel">
-const { useState, useEffect, useRef } = React;
+const {useState,useEffect,useRef,useMemo}=React;
 
-// ══════════════════════════════════════════════════════════
-//  STATIC DATA
-// ══════════════════════════════════════════════════════════
-
-// Category meta  [id, name, icon, bg, text, barColor]
-const CATS = [
-  { id:'habitat',   name:'Bien-être & Hébergement',       icon:'fa-tree',           bg:'bg-emerald-100', txt:'text-emerald-700', bar:'#10b981', light:'bg-emerald-50'  },
-  { id:'alim',      name:'Alimentation',                  icon:'fa-bowl-food',      bg:'bg-yellow-100',  txt:'text-yellow-700', bar:'#eab308', light:'bg-yellow-50'   },
-  { id:'sante',     name:'Suivi Sanitaire & Vétérinaire', icon:'fa-stethoscope',    bg:'bg-sky-100',     txt:'text-sky-700',    bar:'#0ea5e9', light:'bg-sky-50'      },
-  { id:'ethique',   name:'Éthique & Transparence',        icon:'fa-scale-balanced', bg:'bg-purple-100',  txt:'text-purple-700', bar:'#a855f7', light:'bg-purple-50'   },
-  { id:'personnel', name:'Personnel & Cadre Légal',       icon:'fa-shield-halved',  bg:'bg-orange-100',  txt:'text-orange-700', bar:'#f97316', light:'bg-orange-50'   },
-  { id:'osint',     name:'OSINT (évaluables en ligne)',   icon:'fa-globe',          bg:'bg-teal-100',    txt:'text-teal-700',   bar:'#14b8a6', light:'bg-teal-50'     },
+/* ═══════════════════════════════════════════════════════════
+   CONFIGURATION
+═══════════════════════════════════════════════════════════ */
+const CATS=[
+  {id:'habitat',   name:'Bien-être & Hébergement',       icon:'fa-tree',          bg:'bg-emerald-100',txt:'text-emerald-700',bar:'#10b981',light:'bg-emerald-50'},
+  {id:'alim',      name:'Alimentation',                  icon:'fa-bowl-food',     bg:'bg-yellow-100', txt:'text-yellow-700', bar:'#eab308',light:'bg-yellow-50'},
+  {id:'sante',     name:'Suivi Sanitaire & Vétérinaire', icon:'fa-stethoscope',   bg:'bg-sky-100',    txt:'text-sky-700',    bar:'#0ea5e9',light:'bg-sky-50'},
+  {id:'ethique',   name:'Éthique & Transparence',        icon:'fa-scale-balanced',bg:'bg-purple-100', txt:'text-purple-700', bar:'#a855f7',light:'bg-purple-50'},
+  {id:'personnel', name:'Personnel & Cadre Légal',       icon:'fa-shield-halved', bg:'bg-orange-100', txt:'text-orange-700', bar:'#f97316',light:'bg-orange-50'},
+  {id:'osint',     name:'OSINT (évaluables en ligne)',   icon:'fa-globe',         bg:'bg-teal-100',   txt:'text-teal-700',   bar:'#14b8a6',light:'bg-teal-50'},
 ];
 
-// CRIT: [catIdx, level, weight, isSeuil, text]
-const CRIT = [
-  // ── Bien-être & Hébergement – Niv.1
+const CRIT=[
   [0,1,3,true, "Respect des besoins naturels, physiologiques et comportementaux"],
   [0,1,3,true, "Taille et qualité de l'enclos adaptées à l'espèce"],
   [0,1,3,true, "Clôture sécurisée empêchant toute fuite"],
@@ -82,7 +70,6 @@ const CRIT = [
   [0,1,2,false,"Propreté et entretien régulier des installations"],
   [0,1,2,false,"Qualité de l'eau irréprochable (aquariums, bassins)"],
   [0,1,2,false,"Clôtures proportionnées aux capacités physiques de l'espèce"],
-  // ── Bien-être & Hébergement – Niv.2
   [0,2,2,false,"Présence d'un substrat naturel adapté (sable, terre, herbe, eau)"],
   [0,2,2,true, "Enrichissement environnemental et comportemental"],
   [0,2,2,false,"Possibilité de choix pour l'animal (ombre/soleil, intérieur/extérieur)"],
@@ -92,35 +79,28 @@ const CRIT = [
   [0,2,3,true, "Maintien des animaux sociaux en groupe (sauf exception vétérinaire)"],
   [0,2,2,false,"Respect des conditions climatiques appropriées à l'espèce"],
   [0,2,2,false,"Limitation du bruit et des nuisances autour des enclos"],
-  // ── Alimentation – Niv.1
   [1,1,3,true, "Qualité de l'alimentation garantie (adaptée à l'espèce, variée)"],
   [1,1,3,true, "Quantité de nourriture suffisante et adaptée à chaque individu"],
   [1,1,2,false,"Qualité sanitaire de la nourriture strictement contrôlée"],
   [1,1,3,true, "Mise à disposition d'eau potable en permanence"],
-  // ── Suivi Sanitaire – Niv.1
   [2,1,3,true, "Présence d'un vétérinaire spécialisé ou partenariat régulier"],
   [2,1,2,true, "Plan écrit de nettoyage et désinfection des locaux et matériel"],
   [2,1,2,false,"Règles d'hygiène définies pour le personnel et le public"],
   [2,1,3,true, "Déclaration immédiate à la DDPP de toute suspicion de maladie"],
-  // ── Suivi Sanitaire – Niv.2
   [2,2,3,true, "Suivi quotidien de l'état de santé des animaux"],
   [2,2,2,false,"Renseignement systématique des données de santé"],
   [2,2,2,false,"Mesures préventives et conduites à tenir lors des soins"],
   [2,2,2,false,"Procédures de surveillance sanitaire et prophylaxie établies"],
   [2,2,2,false,"Durée des périodes d'isolement strictement définie"],
   [2,2,2,false,"Suivi médical individualisé avec protocoles de prévention"],
-  // ── Suivi Sanitaire – Niv.3
   [2,3,2,true, "Gestion éthique des maladies et de la fin de vie"],
-  // ── Éthique – Niv.1
   [3,1,3,true, "Origine légale, documentée et traçable de tous les animaux"],
   [3,1,3,true, "Respect des conventions internationales (CITES et équivalents)"],
   [3,1,2,false,"Registre d'entrée/sortie tenu à jour (provenance, ID, décès)"],
-  // ── Éthique – Niv.2
   [3,2,3,true, "Refus catégorique des captures sauvages non justifiées"],
   [3,2,3,true, "Absence de spectacles contraignants ou humiliants"],
   [3,2,2,false,"Interdiction d'utiliser les animaux à des fins purement commerciales"],
   [3,2,2,false,"Prise en compte de l'individualité et du bien-être psychologique"],
-  // ── Éthique – Niv.3
   [3,3,2,true, "Information claire et honnête sur l'origine des animaux (public)"],
   [3,3,2,false,"Distinction entre animaux nés en captivité, transférés ou sauvés"],
   [3,3,2,true, "Politique écrite concernant la reproduction"],
@@ -130,159 +110,237 @@ const CRIT = [
   [3,3,2,false,"Limitation stricte des interactions imposées avec le public"],
   [3,3,1,false,"Position officielle sur l'accueil d'animaux saisis"],
   [3,3,2,false,"Transparence sur les incidents survenus dans le parc"],
-  // ── Éthique – Niv.4
   [3,4,2,true, "Engagement actif et documenté contre le trafic animal"],
-  [3,4,2,true, "Réalisation d'audits ou de contrôles indépendants"],
-  // ── Personnel – Niv.1
+  [3,4,2,true, "Réalisation d'audits ou de contrôles indépendants (EAZA/externe)"],
   [4,1,3,true, "Autorisation préfectorale obtenue et maintenue"],
   [4,1,3,true, "Conformité aux inspections régulières et inopinées (DDPP)"],
   [4,1,3,true, "Certificat de capacité détenu par le responsable"],
   [4,1,3,true, "Plan de secours et protocole en cas de fuite d'animal"],
   [4,1,2,false,"Plan incendie documenté et régulièrement testé"],
-  // ── Personnel – Niv.2
   [4,2,2,true, "Formation du personnel au bien-être animal et à la nutrition"],
   [4,2,2,false,"Formation continue aux manipulations et procédures d'urgence"],
-  // ── Personnel – Niv.3
   [4,3,2,true, "Plan de gestion de crise sanitaire"],
   [4,3,1,false,"Implication du personnel dans l'amélioration continue"],
-  // ── OSINT – Niv.2
-  [5,2,1,false,"Mention d'une clinique vétérinaire sur le site internet"],
-  // ── OSINT – Niv.3
-  [5,3,2,false,"Rubrique dédiée à la condition animale sur le site"],
+  [5,2,1,false,"Mention d'une clinique ou équipe vétérinaire sur le site internet"],
+  [5,3,2,false,"Rubrique dédiée à la condition animale sur le site web"],
   [5,3,2,true, "Contenus pédagogiques sur le bien-être animal en ligne"],
   [5,3,1,false,"Informations en ligne sur l'alimentation et l'espérance de vie"],
-  // ── OSINT – Niv.4
   [5,4,1,false,"Mise à jour régulière et vérifiable du site web"],
-  [5,4,1,false,"Association de protection des animaux liée au parc"],
+  [5,4,1,false,"Association de protection animale liée au parc"],
   [5,4,1,false,"Système de parrainage d'animal proposé au public"],
-  [5,4,1,true, "Équipement vétérinaire de pointe (SOTA)"],
-  [5,4,2,true, "Collaborations officielles avec instances reconnues (EAZA, WAZA, UICN, LPO)"],
+  [5,4,1,true, "Équipement vétérinaire de pointe (anesthésie, imagerie, chirurgie)"],
+  [5,4,2,true, "Collaborations officielles (AFdPZ, EAZA, WAZA, UICN, LPO)"],
 ];
 
-const SEUILS_N = { 1:0, 2:0, 3:0, 4:0 };
-CRIT.forEach(c => { if(c[3]) SEUILS_N[c[1]]++; });
-const SCORE_THR = { 1:20, 2:40, 3:60, 4:80 };
+const SEUILS_N={1:0,2:0,3:0,4:0};
+CRIT.forEach(c=>{if(c[3])SEUILS_N[c[1]]++;});
+const SCORE_THR={1:20,2:40,3:60,4:80};
 
-const LVL_CFG = {
-  4:{ colorCls:"bg-emerald-600", txtCls:"text-emerald-600", bdCls:"border-emerald-500", lightCls:"bg-emerald-50", icon:"fa-award",         title:"Excellence",        hue:"emerald" },
-  3:{ colorCls:"bg-lime-500",    txtCls:"text-lime-600",    bdCls:"border-lime-500",    lightCls:"bg-lime-50",    icon:"fa-leaf",            title:"Engagé",            hue:"lime"    },
-  2:{ colorCls:"bg-amber-500",   txtCls:"text-amber-500",   bdCls:"border-amber-500",   lightCls:"bg-amber-50",   icon:"fa-arrows-rotate",   title:"En Transition",     hue:"amber"   },
-  1:{ colorCls:"bg-blue-500",    txtCls:"text-blue-500",    bdCls:"border-blue-500",    lightCls:"bg-blue-50",    icon:"fa-seedling",        title:"En Développement",  hue:"blue"    },
-};
-const LVL_DESC = {
-  1:"Le parc respecte le cadre légal minimal : licence préfectorale, certificat de capacité, vétérinaire désigné, alimentation conforme et traçabilité des animaux.",
-  2:"Au-delà du légal, le parc démontre un engagement concret : enrichissements, regroupements sociaux, suivi quotidien, formation du personnel et refus des spectacles contraignants.",
-  3:"Une démarche éthique structurée et éducative : politique de reproduction transparente, gestion éthique de la fin de vie, information du public et contenus pédagogiques.",
-  4:"Référence sectorielle : audits indépendants, partenariats institutionnels (EAZA, WAZA…), équipements de pointe, lutte active contre le trafic et transparence totale.",
+const LVL={
+  4:{colorCls:"bg-emerald-600",txtCls:"text-emerald-600",bdCls:"border-emerald-500",lightCls:"bg-emerald-50",icon:"fa-award",      title:"Excellence",        desc:"Référence sectorielle : audits indépendants, équipements de pointe, lutte active contre le trafic, partenariats EAZA/WAZA/UICN et transparence totale."},
+  3:{colorCls:"bg-lime-600",   txtCls:"text-lime-700",   bdCls:"border-lime-500",   lightCls:"bg-lime-50",   icon:"fa-leaf",       title:"Approche Éthique",  desc:"Démarche éthique structurée : politique de reproduction transparente, gestion éthique de la fin de vie, information du public et contenus pédagogiques actifs."},
+  2:{colorCls:"bg-blue-500",   txtCls:"text-blue-600",   bdCls:"border-blue-500",   lightCls:"bg-blue-50",   icon:"fa-thumbs-up",  title:"Bien-être Démontré",desc:"Bien-être concret au quotidien : enrichissements, regroupements sociaux, suivi sanitaire, formation du personnel, refus spectacles contraignants."},
+  1:{colorCls:"bg-amber-500",  txtCls:"text-amber-600",  bdCls:"border-amber-500",  lightCls:"bg-amber-50",  icon:"fa-seedling",   title:"Normes Légales",    desc:"Cadre légal intégralement respecté : licence préfectorale, certificat de capacité, vétérinaire désigné, alimentation conforme, traçabilité documentée."},
 };
 
-const zoosData = [
-  {
-    id:1, name:"Bioparc de Doué-la-Fontaine", city:"Doué-en-Anjou",
-    lat:47.1895, lng:-0.2974, level:4, stars:"⭐⭐⭐⭐",
-    summary:"Une référence européenne en matière d'immersion et de respect de l'habitat.",
-    analysis:"L'utilisation des carrières de faluns permet de créer des espaces immenses. Les animaux évoluent dans des environnements très proches de leur milieu naturel. Très forte implication dans la conservation in-situ (Projets Nature).",
-    pros:["Immersion totale et naturelle","Enclos parmi les plus vastes d'Europe","Politique de conservation exemplaire"],
-    cons:["Certaines zones très escarpées pour le public"], warning:null,
-    globalPct:91,
-    categoryPcts:{ habitat:90, alim:100, sante:93, ethique:88, personnel:95, osint:87 },
-    seuilStatus:{ 1:[16,16], 2:[7,7], 3:[5,5], 4:[4,4] },
-  },
-  {
-    id:2, name:"Réserve Africaine de Sigean", city:"Sigean",
-    lat:43.0645, lng:2.9497, level:3, stars:"⭐⭐⭐",
-    summary:"De vastes étendues offrant une semi-liberté très appréciable pour les herbivores.",
-    analysis:"Le format 'safari' permet d'offrir des centaines d'hectares aux troupeaux. Les comportements grégaires naturels sont parfaitement respectés. Les zones piétonnes sont plus classiques mais en cours de modernisation.",
-    pros:["Espaces immenses pour la faune de plaine","Cohabitation naturelle des espèces"],
-    cons:["Impact carbone du format 'safari automobile'","Transparence et communication en ligne perfectibles"], warning:null,
-    globalPct:72,
-    categoryPcts:{ habitat:83, alim:95, sante:80, ethique:68, personnel:88, osint:45 },
-    seuilStatus:{ 1:[16,16], 2:[7,7], 3:[5,5], 4:[2,4] },
-  },
-  {
-    id:3, name:"Zoo de la Tête d'Or", city:"Lyon",
-    lat:45.7786, lng:4.8532, level:2, stars:"⭐⭐",
-    summary:"Parc urbain historique engagé dans une transition positive.",
-    analysis:"La plaine africaine démontre une vraie volonté de bien-être. Le parc fait face à des défis architecturaux historiques, mais les équipes déploient de vrais efforts d'enrichissement au quotidien.",
-    pros:["Entrée gratuite (pédagogie inclusive)","Bonne présence vétérinaire","Efforts d'enrichissement notables"],
-    cons:["Contraintes spatiales urbaines importantes","Installations historiques à moderniser","Politique de reproduction à formaliser"], warning:null,
-    globalPct:52,
-    categoryPcts:{ habitat:58, alim:88, sante:75, ethique:45, personnel:80, osint:38 },
-    seuilStatus:{ 1:[16,16], 2:[7,7], 3:[2,5], 4:[0,4] },
-  },
-  {
-    id:4, name:"Ménagerie du Jardin des Plantes", city:"Paris",
-    lat:48.8443, lng:2.3601, level:1, stars:"⭐",
-    summary:"Institution historique initiant sa réflexion sur le bien-être animal moderne.",
-    analysis:"Situé au cœur de Paris, le parc fait face à des contraintes spatiales extrêmes. Ce label salue les premières initiatives visant à réorienter la collection vers des espèces mieux adaptées à cet espace classé.",
-    pros:["Architecture historique préservée","Programmes d'élevage spécifiques","Fort potentiel pédagogique"],
-    cons:["Espaces très restreints pour la grande faune","Proximité publique trop importante sur certains enclos","Transparence et politique de reproduction à structurer"],
-    warning:"Nous encourageons la poursuite de la transition vers des espèces nécessitant de plus petits territoires.",
-    globalPct:30,
-    categoryPcts:{ habitat:22, alim:65, sante:55, ethique:18, personnel:60, osint:10 },
-    seuilStatus:{ 1:[16,16], 2:[4,7], 3:[0,5], 4:[0,4] },
-  },
+/* ═══════════════════════════════════════════════════════════
+   DONNÉES — 12 ZOOS RÉELS
+═══════════════════════════════════════════════════════════ */
+const ZOOS=[
+  /* ── NIVEAU 4 ── */
+  {id:1,name:"Zoo de Zurich",short:"Zoo de Zurich",country:"Suisse",flag:"🇨🇭",city:"Zurich",
+   lat:47.3931,lng:8.5797,level:4,certifs:["EAZA","WAZA","UICN","WWF"],
+   why:"Régulièrement cité comme meilleur zoo du monde par les experts académiques. Sa réputation internationale en fait un étalon de référence incontournable pour tout label bien-être.",
+   summary:"Pionnier mondial du bien-être – Masoala 1 ha, Kaeng Krachan 11 000 m², aucun spectacle.",
+   analysis:"Le Zoo de Zurich est régulièrement cité comme référence académique mondiale. Le hall Masoala (1 ha de forêt tropicale intérieure) et la réserve Kaeng Krachan (11 000 m² pour les éléphants) incarnent une philosophie radicalement différente : les animaux d'abord. Aucun spectacle ni dressage. L'alimentation respecte les comportements naturels de recherche de nourriture. La politique de reproduction est publiée et soumise à évaluation externe. L'équipement vétérinaire propre (IRM, scanner, bloc chirurgical) complète ce tableau exceptionnel.",
+   pros:["Hall Masoala (1 ha) et Kaeng Krachan (11 000 m²) : références mondiales","Aucun spectacle ni dressage, immersion totale","Politique de reproduction publiée et auditée","Équipement vétérinaire SOTA propre (IRM, scanner, bloc)","Partenariats actifs WWF, UICN SSC, universités suisses"],
+   cons:["Quelques événements nocturnes ponctuels (impact sonore limité)","Contact-feeding très limité mais encore existant"],
+   warning:null,
+   globalPct:96,
+   catPcts:{habitat:97,alim:100,sante:99,ethique:97,personnel:99,osint:87},
+   seuils:{1:[16,16],2:[7,7],3:[5,5],4:[4,4]}},
+
+  {id:2,name:"Zoo de Berlin",short:"Zoo de Berlin",country:"Allemagne",flag:"🇩🇪",city:"Berlin",
+   lat:52.5077,lng:13.3369,level:4,certifs:["EAZA","WAZA"],
+   why:"Plus de 1 200 espèces et des rapports annuels publics exemplaires. Représente le modèle européen des grands zoos historiques réussissant leur modernisation éthique.",
+   summary:"Plus ancien zoo d'Allemagne (1844) – 35 ha, 1 200 espèces, rapports annuels exemplaires.",
+   analysis:"Fondé en 1844, le Zoo de Berlin allie histoire et modernité. Plus de 1 200 espèces sont hébergées sur 35 ha en cours de modernisation continue. Aucun spectacle de dressage. L'équipe vétérinaire permanente spécialisée faune sauvage et les rapports annuels très détaillés témoignent d'une culture de la transparence réelle. Le Fonds Berlin finance la conservation in-situ. La densité urbaine reste la principale contrainte.",
+   pros:["1 200 espèces, aquarium historique intégré","Rapports annuels publics très détaillés","Modernisation continue des enclos","Vétérinaires spécialisés faune sauvage permanents","Aucun spectacle de dressage"],
+   cons:["Densité élevée : 20 000 animaux / 35 ha en centre-ville","Bâtiments historiques classés : rénovation contrainte"],
+   warning:null,
+   globalPct:92,
+   catPcts:{habitat:89,alim:100,sante:99,ethique:95,personnel:99,osint:83},
+   seuils:{1:[16,16],2:[7,7],3:[5,5],4:[4,4]}},
+
+  {id:3,name:"Pairi Daiza",short:"Pairi Daiza",country:"Belgique",flag:"🇧🇪",city:"Brugelette",
+   lat:50.5982,lng:3.8796,level:4,certifs:["EAZA"],
+   why:"Zoo le plus primé d'Europe ces 10 dernières années. Sa croissance rapide (2M visiteurs) tout en maintenant des standards EAZA élevés en fait un modèle de développement ambitieux.",
+   summary:"55 ha de zones immersives thématiques – Fondation conservation panda, gorille, rhinocéros.",
+   analysis:"Pairi Daiza a révolutionné l'expérience zoo en Belgique avec des zones thématiques immersives (Asie, Océanie, Islande, Afrique…). La Fondation Pairi Daiza finance activement la conservation du panda géant, du gorille de montagne et du rhinocéros. Aucun spectacle contraignant, enrichissements documentés par espèce, politique de reproduction encadrée. Communication pédagogique numérique très développée.",
+   pros:["55+ ha en zones thématiques entièrement immersives","Fondation active : panda géant, gorille, rhinocéros","Enrichissements documentés par espèce","Communication digitale et pédagogique développée","Parrainage en ligne accessible"],
+   cons:["Décors thématiques parfois artificiels (substrat)","Communication sur incidents à améliorer","Fréquentation 2M visiteurs/an : forte densité"],
+   warning:null,
+   globalPct:89,
+   catPcts:{habitat:87,alim:100,sante:97,ethique:91,personnel:97,osint:80},
+   seuils:{1:[16,16],2:[7,7],3:[5,5],4:[4,4]}},
+
+  {id:4,name:"Zoo de La Palmyre",short:"La Palmyre",country:"France",flag:"🇫🇷",city:"Les Mathes",
+   lat:45.6958,lng:-1.1514,level:4,certifs:["EAZA","WAZA","CEPA","AFdPZ"],
+   why:"Meilleur zoo français selon de nombreux experts, avec la fondation Palmyre Conservation active sur 4 continents. Représente le sommet atteignable pour un zoo français indépendant.",
+   summary:"18 ha de forêt, 50+ EEP, Palmyre Conservation – la référence RSE française.",
+   analysis:"Au cœur d'une pinède charentaise, La Palmyre allie beauté naturelle et rigueur scientifique. Sa fondation Palmyre Conservation finance 20+ programmes in-situ actifs sur 4 continents. L'approche 100% renforcement positif (jamais coercitif), documentée par les soigneurs sur YouTube et podcasts, en fait l'un des zoos français les plus transparents. Les naissances de rhinocéros, guépards et tamarins-lion témoignent d'une expertise unique.",
+   pros:["Palmyre Conservation : 20+ programmes in-situ actifs","100% renforcement positif documenté (YouTube, podcasts)","Vétérinaires SOTA plein temps","50+ EEP, expertise reproduction unique","Forêt paysagère 18 ha, aucune cage nue"],
+   cons:["Spectacles otaries (EAZA-compatibles mais commerciaux)","Taille enclos perfectible pour grands félins","Site web mis à jour irrégulièrement"],
+   warning:null,
+   globalPct:89,
+   catPcts:{habitat:86,alim:100,sante:99,ethique:91,personnel:99,osint:83},
+   seuils:{1:[16,16],2:[7,7],3:[5,5],4:[4,4]}},
+
+  /* ── NIVEAU 3 ── */
+  {id:5,name:"Bioparc de Doué-la-Fontaine",short:"Bioparc Doué",country:"France",flag:"🇫🇷",city:"Doué-en-Anjou",
+   lat:47.1895,lng:-0.2974,level:3,certifs:["EAZA","AFdPZ"],
+   why:"Cas architectural unique en Europe (carrières de faluns) et pionniers des 'Projets Nature' en France. Illustre parfaitement qu'un zoo peut maximiser le bien-être sans grand budget.",
+   summary:"Carrières de faluns uniques en Europe – immersion maximale, 30+ projets conservation.",
+   analysis:"Le Bioparc est un cas unique en Europe : ses enclos sont creusés dans les anciennes carrières de tuffeau volcanique, créant des espaces semi-naturels impossibles à reproduire. Les Projets Nature financent 30+ programmes de conservation in-situ en Afrique, Madagascar et Europe. Aucun spectacle contraignant. Ce qui manque pour l'Excellence : un seul seuil N4 non validé (équipement vétérinaire SOTA propre – le parc travaille avec un partenariat externe).",
+   pros:["Enclos dans carrières de faluns : naturel inégalable","Projets Nature : 30+ programmes conservation in-situ","Aucun spectacle, immersion totale","EEP actifs : panthère des neiges, lémuriens, gorilles","Enrichissements quotidiens documentés"],
+   cons:["Équipement vétérinaire SOTA : partenariat externe, pas propre (seuil N4)","Politique reproduction à mieux publier","Parrainage en ligne en cours de développement"],
+   warning:"Un seul seuil N4 manquant (équipement vétérinaire SOTA propre) bloque l'Excellence. Un investissement ciblé déverrouillerait immédiatement le niveau supérieur.",
+   globalPct:94,
+   catPcts:{habitat:97,alim:100,sante:98,ethique:94,personnel:99,osint:80},
+   seuils:{1:[16,16],2:[7,7],3:[5,5],4:[3,4]}},
+
+  {id:6,name:"ZooParc de Beauval",short:"ZooParc Beauval",country:"France",flag:"🇫🇷",city:"Saint-Aignan",
+   lat:47.3965,lng:1.3764,level:3,certifs:["EAZA","WAZA","UICN","LPO","AFdPZ"],
+   why:"Zoo le plus fréquenté de France (2M visiteurs/an) et le plus médiatisé (panda géant). Incontournable dans tout panel français, et sa controverse tigres/lions blancs en fait un cas d'étude éthique intéressant.",
+   summary:"45 ha, 120+ programmes conservation – mais une controverse éthique documentée.",
+   analysis:"ZooParc de Beauval est le zoo le plus visité de France (2M visiteurs/an) et l'un des mieux certifiés. Beauval Nature finance 120+ programmes de conservation. Le Centre de Soins (2023) témoigne d'un engagement fort. Cependant, la présence délibérée de tigres et lions blancs – lignées génétiquement appauvries maintenues pour l'attrait commercial – constitue une controverse documentée qui bloque le niveau Excellence (seuil N3 : absence souffrance et reproduction contrôlée).",
+   pros:["Beauval Nature : 120+ programmes conservation in-situ","Centre de Soins faune locale (2023)","EAZA+WAZA+UICN+LPO+AFdPZ : cumul unique","3 EEP coordonnés, vétérinaires plein temps","Transparence RSE en amélioration (méthanisation, etc.)"],
+   cons:["Tigres et lions blancs : consanguinité volontaire (controverse documentée)","35 000 animaux / 45 ha : densité élevée","Spectacles otaries/oiseaux à vocation commerciale","Transparence incidents à améliorer"],
+   warning:"La conservation de tigres et lions blancs (consanguinité volontaire pour attrait commercial) contredit les standards éthiques EAZA. C'est le principal verrou vers l'Excellence.",
+   globalPct:88,
+   catPcts:{habitat:83,alim:100,sante:97,ethique:88,personnel:99,osint:93},
+   seuils:{1:[16,16],2:[7,7],3:[5,5],4:[3,4]}},
+
+  {id:7,name:"Parc Zoologique de Paris",short:"Zoo de Vincennes",country:"France",flag:"🇫🇷",city:"Paris",
+   lat:48.8337,lng:2.4155,level:3,certifs:["EAZA","MNHN"],
+   why:"Géré par le MNHN, il représente l'unique zoo public à vocation scientifique de France. Sa présence illustre les défis spécifiques des zoos urbains institutionnels.",
+   summary:"Rénové 2014 par le MNHN – 5 biozones, recherche scientifique intégrée, naissance rhinocéros 2024.",
+   analysis:"Le Parc Zoologique de Paris, géré par le MNHN depuis 2014, propose une expérience par biozones très aboutie. La recherche scientifique MNHN est directement intégrée. Le Programme Save the Rhino a produit une naissance de rhinocéros blanc en 2024. Contrainte principale : 14,5 ha en Paris 12e pour certains grands mammifères, et une communication OSINT encore insuffisante.",
+   pros:["Biozones conçues par le MNHN (recherche intégrée)","Naissance rhinocéros blanc 2024 (Save the Rhino)","Aucun spectacle de dressage","Parrainage d'espèces accessible en ligne","Missions pédagogiques MNHN pour le public"],
+   cons:["14,5 ha : superficie limitée pour lions et rhinocéros","Équipement vétérinaire SOTA partagé MNHN, pas propre","Politique reproduction à formaliser publiquement","Communication OSINT insuffisante"],
+   warning:null,
+   globalPct:80,
+   catPcts:{habitat:72,alim:100,sante:92,ethique:81,personnel:95,osint:59},
+   seuils:{1:[16,16],2:[7,7],3:[5,5],4:[3,4]}},
+
+  {id:8,name:"Zoo de Mulhouse",short:"Zoo de Mulhouse",country:"France",flag:"🇫🇷",city:"Mulhouse",
+   lat:47.7492,lng:7.3456,level:3,certifs:["EAZA"],
+   why:"Zoo municipal de taille moyenne représentant des centaines de parcs similaires en France. Sa spécialisation primatologie et ses publications académiques en font un cas d'étude unique.",
+   summary:"10 ha, spécialiste primates & lémuriens – co-pionnier reprod. lémur aux yeux turquoises.",
+   analysis:"Le Zoo de Mulhouse est une référence académique en primatologie. Co-pionnier (avec La Palmyre) de la reproduction du lémur aux yeux turquoises en captivité, il publie régulièrement des études éthologiques avec des universités partenaires. Sa taille modeste (10 ha) est sa principale contrainte : certains enclos de grands mammifères restent inférieurs aux standards idéaux, et la communication en ligne doit être renforcée.",
+   pros:["Référence primatologie : études éthologiques publiées","Co-pionnier reprod. lémur aux yeux turquoises","Vétérinaires internes spécialisés","Bonne politique reproduction sur espèces phares","Partenariats universitaires actifs"],
+   cons:["10 ha : exigu pour grands félins","Communication en ligne insuffisante","Substrat béton encore présent dans certains secteurs","Parrainage non développé en ligne"],
+   warning:null,
+   globalPct:76,
+   catPcts:{habitat:68,alim:100,sante:91,ethique:79,personnel:97,osint:47},
+   seuils:{1:[16,16],2:[7,7],3:[5,5],4:[3,4]}},
+
+  /* ── NIVEAU 2 ── */
+  {id:9,name:"Parc Animalier de Sainte-Croix",short:"Sainte-Croix",country:"France",flag:"🇫🇷",city:"Rhodes",
+   lat:48.7687,lng:6.8973,level:2,certifs:["EAZA"],
+   why:"Avec 130 ha de semi-liberté, il représente le format 'parc naturel' alternatif au zoo classique. Son modèle de conservation in-situ de faune européenne est unique en France.",
+   summary:"130 ha de semi-liberté pour la faune européenne – EEP bisons & Przewalski.",
+   analysis:"Avec 130 hectares dédiés à la faune européenne en semi-liberté, Sainte-Croix offre l'un des plus grands espaces par animal de France. Le Fonds Sainte-Croix Biodiversité finance les EEP bisons d'Europe et chevaux de Przewalski. Le score d'hébergement est exceptionnel pour les herbivores. Deux seuils N3 non encore validés bloquent le niveau supérieur : la politique de reproduction n'est pas publiée et les contenus pédagogiques en ligne sont insuffisants.",
+   pros:["130 ha : semi-liberté unique en France","Bisons, loups, ours : comportements naturels respectés","Fonds Biodiversité : EEP bisons et Przewalski","Animations guidées quotidiennes de qualité","Substrat naturel 100% pour la faune de plaine"],
+   cons:["Politique de reproduction non publiée (seuil N3 bloquant)","Contenus pédagogiques en ligne insuffisants (seuil N3 bloquant)","Suivi médical individuel difficile en semi-liberté","Transparence incidents à améliorer"],
+   warning:"2 seuils N3 non validés (politique reprod. + contenus péda. en ligne). Des publications simples sur le site web déverrouilleraient l'Approche Éthique.",
+   globalPct:77,
+   catPcts:{habitat:91,alim:97,sante:84,ethique:72,personnel:90,osint:50},
+   seuils:{1:[16,16],2:[7,7],3:[1,5],4:[3,4]}},
+
+  {id:10,name:"Artis Zoo (Amsterdam)",short:"Artis Amsterdam",country:"Pays-Bas",flag:"🇳🇱",city:"Amsterdam",
+   lat:52.3663,lng:4.9163,level:2,certifs:["EAZA","WAZA"],
+   why:"Co-fondateur de l'EAZA et l'un des plus vieux zoos d'Europe (1838). Ses bâtiments classés illustrent les défis patrimoniaux, et son intégration musée-zoo-planétarium est un cas unique.",
+   summary:"EAZA co-fondateur (1838) – musée zoologique, aquarium et planétarium intégrés.",
+   analysis:"Artis est l'un des zoos fondateurs de l'EAZA et l'un des plus anciens d'Europe. Sa force réside dans l'intégration unique d'un musée zoologique, d'un planétarium et d'un aquarium historique. L'approche pédagogique est exemplaire. Contrainte majeure : les bâtiments classés Monument National néerlandais limitent toute modernisation des enclos. Deux seuils N3 non validés (politique reproduction et gestion fin de vie non documentées) maintiennent le niveau Bien-être Démontré.",
+   pros:["EAZA co-fondateur : standards éthiques historiques","Musée + planétarium + aquarium intégrés","Contenus pédagogiques exemplaires en ligne","Aucun spectacle de dressage","Documentation historique très développée"],
+   cons:["Bâtiments classés : modernisation des enclos très contrainte","10 ha centre-ville Amsterdam : forte densité","Politique reproduction peu formalisée (seuil N3)","Gestion fin de vie peu documentée (seuil N3)"],
+   warning:"Les contraintes patrimoniales sont structurelles. Le label Bien-être Démontré reconnaît les efforts réels. La publication de 2 politiques (reproduction + fin de vie) déverrouillerait l'Approche Éthique.",
+   globalPct:77,
+   catPcts:{habitat:65,alim:100,sante:88,ethique:80,personnel:93,osint:75},
+   seuils:{1:[16,16],2:[7,7],3:[3,5],4:[3,4]}},
+
+  /* ── NIVEAU 1 ── */
+  {id:11,name:"Réserve Africaine de Sigean",short:"Sigean",country:"France",flag:"🇫🇷",city:"Sigean",
+   lat:43.0645,lng:2.9497,level:1,certifs:[],
+   why:"Seul safari de grande envergure (300 ha) en France. Son format radicalement différent du zoo classique enrichit le panel et illustre les limites éthiques d'un modèle sans cadre EAZA.",
+   summary:"300 ha de safari unique en France – excellent pour les troupeaux, gaps éthiques majeurs.",
+   analysis:"La Réserve de Sigean offre un format safari de 300 hectares absolument unique en France, avec des comportements grégaires naturels des herbivores remarquablement respectés. Mais l'absence de membership EAZA, l'absence de politique de conservation documentée, l'absence de politique de reproduction publiée et de contenus pédagogiques en ligne empêchent l'accès aux niveaux supérieurs. L'impact carbone du safari automobile n'est pas adressé.",
+   pros:["300 ha : espaces exceptionnels pour les troupeaux d'herbivores","Comportements grégaires et territoriaux naturels","Conformité légale française complète","Troupeaux africains en conditions proches du sauvage"],
+   cons:["Non-membre EAZA : absence d'audit externe","Politique de reproduction absente (seuil N3 bloquant)","Contenus pédagogiques en ligne absents (seuil N3 bloquant)","Enrichissements absents ou non structurés","Transparence en ligne très limitée"],
+   warning:"L'adhésion à l'EAZA ou AFdPZ fournirait un cadre immédiat. La publication d'une politique de reproduction et d'une section pédagogique déverrouillerait rapidement le Niveau 2.",
+   globalPct:57,
+   catPcts:{habitat:80,alim:92,sante:60,ethique:42,personnel:72,osint:22},
+   seuils:{1:[16,16],2:[3,7],3:[0,5],4:[0,4]}},
+
+  {id:12,name:"Zoo d'Amnéville",short:"Zoo d'Amnéville",country:"France",flag:"🇫🇷",city:"Amnéville",
+   lat:49.2591,lng:6.1335,level:1,certifs:["EAZA"],
+   why:"Cas d'école de la reconstruction éthique : exclusion EAZA pour Tiger World, puis réintégration 2022. Illustre comment un zoo peut perdre puis regagner sa crédibilité institutionnelle.",
+   summary:"Réintégré EAZA oct. 2022 après exclusion Tiger World – transition en cours.",
+   analysis:"Le Zoo d'Amnéville traverse une phase de reconstruction éthique après son exclusion de l'EAZA pour le Tiger World (2015-2020) et sa réintégration en octobre 2022. Les spectacles de lions de mer sont encore maintenus. Le Jurassic Expedition 2025 a généré des alertes de la Fondation 30 Millions d'Amis (perturbations sonores sur les rapaces). La politique de reproduction et les contenus pédagogiques sont absents en ligne. La dynamique de réintégration EAZA est cependant positive.",
+   pros:["Réintégré EAZA en 2022 : dynamique positive","Vétérinaires présents depuis 1995","Origines légales et traçabilité CITES conformes","Conformité légale française complète"],
+   cons:["Spectacles lions de mer encore maintenus (seuil N2 bloquant)","Jurassic Expedition 2025 : nuisances sonores (alerte Code Animal)","Politique de reproduction absente en ligne (seuil N3)","Contenus pédagogiques absents (seuil N3)","Tiger World jamais reconnu officiellement"],
+   warning:"La suppression des spectacles de lions de mer est le principal verrou vers le Niveau 2. C'est la priorité RSE absolue pour progresser rapidement.",
+   globalPct:49,
+   catPcts:{habitat:55,alim:97,sante:64,ethique:43,personnel:75,osint:30},
+   seuils:{1:[16,16],2:[2,7],3:[0,5],4:[0,4]}},
 ];
 
-// ══════════════════════════════════════════════════════════
-//  SHARED COMPONENTS
-// ══════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════ */
+const pctColor=p=>p>=80?"#16a34a":p>=60?"#65a30d":p>=40?"#3b82f6":"#d97706";
 
-const ScoreBar = ({ pct, barColor = "#10b981", animated = true }) => (
-  <div className="bar-track flex-1">
-    <div className="bar-fill" style={{ width: animated ? `${pct}%` : '0%', backgroundColor: barColor }} />
-  </div>
-);
-
-// Determine bar color by pct
-const pctColor = p => p >= 80 ? "#16a34a" : p >= 60 ? "#65a30d" : p >= 40 ? "#d97706" : "#3b82f6";
-
-// ── Grille de notation tab (inside modal) ──────────────────
-const ScorecardTab = ({ zoo }) => {
-  const [show, setShow] = useState(false);
-  useEffect(() => { const t = setTimeout(() => setShow(true), 80); return () => clearTimeout(t); }, []);
-  const lc = LVL_CFG[zoo.level];
-
-  return (
+/* ═══════════════════════════════════════════════════════════
+   SCORECARD TAB
+═══════════════════════════════════════════════════════════ */
+const ScorecardTab=({zoo})=>{
+  const [show,setShow]=useState(false);
+  useEffect(()=>{const t=setTimeout(()=>setShow(true),80);return()=>clearTimeout(t);},[]);
+  const lc=LVL[zoo.level];
+  return(
     <div className="space-y-7 fade-in">
-
-      {/* Global score */}
       <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
         <div className="flex justify-between items-end mb-3">
           <div>
             <div className="text-xs uppercase tracking-widest text-slate-400 mb-0.5">Score global pondéré</div>
             <div className={`font-display text-4xl font-bold ${lc.txtCls}`}>{zoo.globalPct}%</div>
           </div>
-          <div className={`${lc.colorCls} text-white px-3 py-1 rounded-full text-xs font-bold`}>
-            <i className={`fa-solid ${lc.icon} mr-1`}></i>{lc.title}
+          <div className={`${lc.colorCls} text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5`}>
+            <i className={`fa-solid ${lc.icon}`}/> {lc.title}
           </div>
         </div>
         <div className="bar-track">
-          <div className="bar-fill" style={{ width: show ? `${zoo.globalPct}%` : '0%', backgroundColor: pctColor(zoo.globalPct) }} />
+          <div className="bar-fill" style={{width:show?`${zoo.globalPct}%`:'0%',backgroundColor:pctColor(zoo.globalPct)}}/>
         </div>
-        <div className="flex justify-between text-xs text-slate-400 mt-1">
-          <span>0%</span><span>Seuil Niv.2 : 40%</span><span>Seuil Niv.4 : 80%</span><span>100%</span>
+        <div className="flex justify-between text-xs text-slate-400 mt-1.5">
+          <span>0%</span><span>Niv.2: 40%</span><span>Niv.3: 60%</span><span>Niv.4: 80%</span><span>100%</span>
         </div>
       </div>
 
-      {/* Category scores */}
       <div>
         <div className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Scores par catégorie</div>
         <div className="space-y-2.5">
-          {CATS.map((cat, i) => {
-            const pct = zoo.categoryPcts[cat.id];
-            return (
+          {CATS.map((cat,i)=>{
+            const pct=zoo.catPcts[cat.id];
+            return(
               <div key={cat.id} className="flex items-center gap-3">
                 <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs flex-shrink-0 ${cat.bg} ${cat.txt}`}>
-                  <i className={`fa-solid ${cat.icon}`}></i>
+                  <i className={`fa-solid ${cat.icon}`}/>
                 </div>
-                <span className="text-xs text-slate-600 w-32 flex-shrink-0 truncate">{cat.name}</span>
+                <span className="text-xs text-slate-600 w-36 flex-shrink-0 truncate">{cat.name}</span>
                 <div className="bar-track flex-1">
-                  <div className="bar-fill" style={{
-                    width: show ? `${pct}%` : '0%',
-                    backgroundColor: cat.bar,
-                    transitionDelay: `${i * 80}ms`
-                  }}/>
+                  <div className="bar-fill" style={{width:show?`${pct}%`:'0%',backgroundColor:cat.bar,transitionDelay:`${i*80}ms`}}/>
                 </div>
                 <span className="text-xs font-bold text-slate-700 w-9 text-right flex-shrink-0">{pct}%</span>
               </div>
@@ -291,34 +349,33 @@ const ScorecardTab = ({ zoo }) => {
         </div>
       </div>
 
-      {/* Seuil verification */}
       <div>
-        <div className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Vérification des seuils obligatoires</div>
+        <div className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Validation des seuils obligatoires</div>
         <div className="space-y-2">
-          {[1,2,3,4].map(lv => {
-            const [passed, total] = zoo.seuilStatus[lv];
-            const scoreOk  = zoo.globalPct >= SCORE_THR[lv];
-            const seuilOk  = passed === total;
-            const allOk    = seuilOk && scoreOk;
-            const l        = LVL_CFG[lv];
-            return (
-              <div key={lv} className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${allOk ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200'}`}>
+          {[1,2,3,4].map(lv=>{
+            const [passed,total]=zoo.seuils[lv];
+            const scoreOk=zoo.globalPct>=SCORE_THR[lv];
+            const seuilOk=passed===total;
+            const allOk=seuilOk&&scoreOk;
+            const l=LVL[lv];
+            return(
+              <div key={lv} className={`flex items-center gap-3 p-3 rounded-xl border ${allOk?'bg-emerald-50 border-emerald-200':'bg-slate-50 border-slate-200'}`}>
                 <div className={`w-8 h-8 rounded-full ${l.colorCls} flex items-center justify-center flex-shrink-0`}>
-                  <i className={`fa-solid ${l.icon} text-white text-xs`}></i>
+                  <i className={`fa-solid ${l.icon} text-white text-xs`}/>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-bold text-slate-800">Niveau {lv} – {l.title}</div>
                   <div className="text-xs text-slate-500">
-                    {passed}/{total} seuils&nbsp; · &nbsp;Score ≥ {SCORE_THR[lv]}% :&nbsp;
-                    <span className={scoreOk ? 'text-emerald-600 font-semibold' : 'text-red-500 font-semibold'}>{zoo.globalPct}%</span>
+                    {passed}/{total} seuils · Score ≥{SCORE_THR[lv]}%:&nbsp;
+                    <span className={scoreOk?'text-emerald-600 font-semibold':'text-red-500 font-semibold'}>{zoo.globalPct}%</span>
                   </div>
                 </div>
                 <div className="flex gap-1.5 flex-shrink-0">
-                  <span title="Seuils critères" className={`w-7 h-7 rounded-full flex items-center justify-center ${seuilOk ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-500'}`}>
-                    <i className={`fa-solid ${seuilOk ? 'fa-lock-open' : 'fa-lock'} text-xs`}></i>
+                  <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs ${seuilOk?'bg-emerald-100 text-emerald-600':'bg-red-100 text-red-500'}`}>
+                    <i className={`fa-solid ${seuilOk?'fa-lock-open':'fa-lock'}`}/>
                   </span>
-                  <span title="Seuil de score" className={`w-7 h-7 rounded-full flex items-center justify-center ${scoreOk ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-500'}`}>
-                    <i className={`fa-solid ${scoreOk ? 'fa-check' : 'fa-xmark'} text-xs`}></i>
+                  <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs ${scoreOk?'bg-emerald-100 text-emerald-600':'bg-red-100 text-red-500'}`}>
+                    <i className={`fa-solid ${scoreOk?'fa-check':'fa-xmark'}`}/>
                   </span>
                 </div>
               </div>
@@ -327,61 +384,71 @@ const ScorecardTab = ({ zoo }) => {
         </div>
       </div>
 
-      {/* Label conclusion */}
       <div className={`${lc.lightCls} border-l-4 ${lc.bdCls} p-4 rounded-r-xl`}>
         <div className="flex items-center gap-2 mb-1.5">
-          <i className={`fa-solid ${lc.icon} ${lc.txtCls} text-lg`}></i>
+          <i className={`fa-solid ${lc.icon} ${lc.txtCls} text-lg`}/>
           <span className={`font-bold text-sm ${lc.txtCls}`}>Label attribué : {lc.title}</span>
         </div>
-        <p className="text-xs text-slate-600 leading-relaxed">{LVL_DESC[zoo.level]}</p>
+        <p className="text-xs text-slate-600 leading-relaxed">{lc.desc}</p>
       </div>
     </div>
   );
 };
 
-// ── Modal (2 tabs) ─────────────────────────────────────────
-const ModalInner = ({ zoo, onClose }) => {
-  const [tab, setTab] = useState('eval');
-  const lc = LVL_CFG[zoo.level];
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden scale-in" onClick={e => e.stopPropagation()}>
-
+/* ═══════════════════════════════════════════════════════════
+   MODAL
+═══════════════════════════════════════════════════════════ */
+const ModalInner=({zoo,onClose})=>{
+  const [tab,setTab]=useState('eval');
+  const lc=LVL[zoo.level];
+  return(
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm fade-in" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden scale-in" onClick={e=>e.stopPropagation()}>
         {/* Header */}
         <div className="bg-slate-900 p-7 text-white relative overflow-hidden">
-          <div className={`absolute -top-12 -right-12 w-48 h-48 ${lc.colorCls} rounded-full blur-3xl opacity-20`}></div>
+          <div className={`absolute -top-12 -right-12 w-48 h-48 ${lc.colorCls} rounded-full blur-3xl opacity-20`}/>
           <button onClick={onClose} className="absolute top-5 right-5 text-slate-400 hover:text-white bg-white/10 hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-colors z-10">
-            <i className="fa-solid fa-xmark"></i>
+            <i className="fa-solid fa-xmark"/>
           </button>
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-3 flex-wrap">
-              <span className={`${lc.colorCls} px-3 py-1 rounded-full text-xs font-bold`}>{zoo.city}</span>
-              <span className="text-amber-400 tracking-widest">{zoo.stars}</span>
-              <span className={`text-xs font-bold uppercase ${lc.txtCls}`}>{lc.title}</span>
+              <span className="text-slate-300 text-sm">{zoo.flag} {zoo.city}, {zoo.country}</span>
+              <div className="flex gap-1 ml-auto flex-wrap">
+                {zoo.certifs.map(c=>(
+                  <span key={c} className="bg-white/15 text-white text-xs px-2 py-0.5 rounded-full font-semibold">{c}</span>
+                ))}
+              </div>
             </div>
             <h2 className="font-display text-2xl md:text-3xl mb-2">{zoo.name}</h2>
-            <p className="text-slate-300 text-sm">{zoo.summary}</p>
+            <p className="text-slate-300 text-sm leading-relaxed">{zoo.summary}</p>
+            <div className="flex items-center gap-3 mt-4">
+              <div className={`${lc.colorCls} text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5`}>
+                <i className={`fa-solid ${lc.icon}`}/> Niveau {zoo.level} – {lc.title}
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="bar-track w-24">
+                  <div className="bar-fill" style={{width:`${zoo.globalPct}%`,backgroundColor:pctColor(zoo.globalPct)}}/>
+                </div>
+                <span className="font-bold text-white text-sm">{zoo.globalPct}%</span>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Tabs */}
         <div className="flex border-b border-slate-200">
-          {[
-            { id:'eval',  label:'Vue d\'ensemble',      icon:'fa-magnifying-glass' },
-            { id:'grid',  label:'Grille de notation',   icon:'fa-chart-simple'    },
-          ].map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
+          {[{id:'eval',label:"Vue d'ensemble",icon:'fa-magnifying-glass'},{id:'grid',label:"Grille de notation",icon:'fa-chart-simple'}].map(t=>(
+            <button key={t.id} onClick={()=>setTab(t.id)}
               className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold border-b-2 transition-all tab-btn
-                ${tab === t.id ? `border-emerald-600 text-emerald-600 bg-emerald-50/40` : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
-              <i className={`fa-solid ${t.icon} text-xs`}></i>{t.label}
+                ${tab===t.id?'border-emerald-600 text-emerald-600 bg-emerald-50/40':'border-transparent text-slate-500 hover:text-slate-700'}`}>
+              <i className={`fa-solid ${t.icon} text-xs`}/>{t.label}
             </button>
           ))}
         </div>
 
-        {/* Tab body */}
+        {/* Body */}
         <div className="p-7 overflow-y-auto max-h-[58vh] custom-scroll bg-slate-50">
-          {tab === 'eval' && (
+          {tab==='eval'&&(
             <div className="space-y-6 fade-in">
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Synthèse de l'évaluation</h3>
@@ -389,121 +456,104 @@ const ModalInner = ({ zoo, onClose }) => {
               </div>
               <div className="grid md:grid-cols-2 gap-5">
                 <div>
-                  <h4 className="text-xs font-bold text-emerald-700 uppercase mb-2"><i className="fa-solid fa-plus mr-1"></i> Initiatives Positives</h4>
-                  <ul className="space-y-2">
-                    {zoo.pros.map((p,i) => (
+                  <h4 className="text-xs font-bold text-emerald-700 uppercase mb-2"><i className="fa-solid fa-check-circle mr-1"/>Points forts</h4>
+                  <ul className="space-y-1.5">
+                    {zoo.pros.map((p,i)=>(
                       <li key={i} className="text-xs text-slate-600 bg-emerald-50 p-2.5 rounded-xl border border-emerald-100 flex items-start gap-2">
-                        <i className="fa-solid fa-check text-emerald-500 mt-0.5 flex-shrink-0"></i><span>{p}</span>
+                        <i className="fa-solid fa-check text-emerald-500 mt-0.5 flex-shrink-0"/><span>{p}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-slate-500 uppercase mb-2"><i className="fa-solid fa-arrow-trend-up mr-1"></i> Pistes d'Amélioration</h4>
-                  <ul className="space-y-2">
-                    {zoo.cons.map((c,i) => (
+                  <h4 className="text-xs font-bold text-slate-500 uppercase mb-2"><i className="fa-solid fa-arrow-trend-up mr-1"/>Axes d'amélioration</h4>
+                  <ul className="space-y-1.5">
+                    {zoo.cons.map((c,i)=>(
                       <li key={i} className="text-xs text-slate-600 bg-white p-2.5 rounded-xl border border-slate-200 flex items-start gap-2">
-                        <i className="fa-solid fa-circle-dot text-slate-300 mt-0.5 text-[9px] flex-shrink-0"></i><span>{c}</span>
+                        <i className="fa-solid fa-circle-dot text-slate-300 mt-1 text-[9px] flex-shrink-0"/><span>{c}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
               </div>
-              {zoo.warning && (
+              {zoo.warning&&(
                 <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-xl flex gap-3">
-                  <i className="fa-solid fa-lightbulb text-blue-500 text-lg mt-0.5 flex-shrink-0"></i>
+                  <i className="fa-solid fa-lightbulb text-blue-500 text-lg mt-0.5 flex-shrink-0"/>
                   <div>
-                    <div className="font-bold text-blue-900 text-xs uppercase mb-1">Encouragement RSE</div>
-                    <p className="text-xs text-blue-800">{zoo.warning}</p>
+                    <div className="font-bold text-blue-900 text-xs uppercase mb-1">Recommandation RSE</div>
+                    <p className="text-xs text-blue-800 leading-relaxed">{zoo.warning}</p>
                   </div>
                 </div>
               )}
             </div>
           )}
-          {tab === 'grid' && <ScorecardTab zoo={zoo} />}
+          {tab==='grid'&&<ScorecardTab zoo={zoo}/>}
         </div>
       </div>
     </div>
   );
 };
-const Modal = ({ zoo, onClose }) => zoo ? <ModalInner zoo={zoo} onClose={onClose}/> : null;
+const Modal=({zoo,onClose})=>zoo?<ModalInner zoo={zoo} onClose={onClose}/>:null;
 
-// ── Criteria Explorer (GridPage) ───────────────────────────
-const CriteriaExplorer = () => {
-  const [activeLv, setActiveLv] = useState(1);
-  const [openCat, setOpenCat]   = useState(null);
-
-  const lvCrits  = CRIT.filter(c => c[1] === activeLv);
-  const grouped  = CATS.map((cat, i) => ({ ...cat, idx:i, items: lvCrits.filter(c => c[0] === i) })).filter(c => c.items.length);
-
-  return (
-    <div className="mt-14 bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-      {/* Header */}
+/* ═══════════════════════════════════════════════════════════
+   CRITERIA EXPLORER
+═══════════════════════════════════════════════════════════ */
+const CriteriaExplorer=()=>{
+  const [activeLv,setActiveLv]=useState(1);
+  const [openCat,setOpenCat]=useState(null);
+  const lvCrits=CRIT.filter(c=>c[1]===activeLv);
+  const grouped=CATS.map((cat,i)=>({...cat,idx:i,items:lvCrits.filter(c=>c[0]===i)})).filter(c=>c.items.length);
+  return(
+    <div className="mt-10 bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
       <div className="bg-slate-900 px-8 py-6">
-        <h3 className="font-display text-white text-2xl mb-1">Détail des critères d'évaluation</h3>
-        <p className="text-slate-400 text-sm">69 critères classés par niveau et catégorie · 🔒 = seuil obligatoire · ◾ = contributif au score</p>
+        <h3 className="font-display text-white text-2xl mb-1">Détail des 69 critères d'évaluation</h3>
+        <p className="text-slate-400 text-sm">Classés par niveau et catégorie · 🔒 = seuil obligatoire bloquant · ◾ = contributif</p>
       </div>
-
-      {/* Level tabs */}
       <div className="flex border-b border-slate-100">
-        {[1,2,3,4].map(lv => {
-          const lc   = LVL_CFG[lv];
-          const cnt  = CRIT.filter(c => c[1] === lv).length;
-          const sn   = SEUILS_N[lv];
-          const act  = activeLv === lv;
-          return (
-            <button key={lv} onClick={() => { setActiveLv(lv); setOpenCat(null); }}
+        {[1,2,3,4].map(lv=>{
+          const lc=LVL[lv];const cnt=CRIT.filter(c=>c[1]===lv).length;const sn=SEUILS_N[lv];const act=activeLv===lv;
+          return(
+            <button key={lv} onClick={()=>{setActiveLv(lv);setOpenCat(null);}}
               className={`flex-1 py-4 px-2 text-xs font-bold border-b-2 transition-all tab-btn flex flex-col items-center gap-1
-                ${act ? `${lc.bdCls} ${lc.txtCls} bg-slate-50` : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
+                ${act?`${lc.bdCls} ${lc.txtCls} bg-slate-50`:'border-transparent text-slate-400 hover:text-slate-600'}`}>
               <div className="flex items-center gap-1.5">
-                <i className={`fa-solid ${lc.icon}`}></i>
+                <i className={`fa-solid ${lc.icon}`}/>
                 <span className="hidden sm:inline">Niveau {lv}</span>
                 <span className="sm:hidden">{lv}</span>
               </div>
-              <span className="text-slate-400 font-normal">{cnt} critères · {sn} seuils</span>
+              <span className="text-slate-400 font-normal">{cnt} crit. · {sn} seuils</span>
             </button>
           );
         })}
       </div>
-
-      {/* Level description */}
-      <div className={`px-6 py-4 ${LVL_CFG[activeLv].lightCls} border-b border-slate-100`}>
-        <p className="text-sm text-slate-600 leading-relaxed">{LVL_DESC[activeLv]}</p>
+      <div className={`px-6 py-4 ${LVL[activeLv].lightCls} border-b border-slate-100`}>
+        <p className="text-sm text-slate-600 leading-relaxed">{LVL[activeLv].desc}</p>
       </div>
-
-      {/* Accordion by category */}
       <div className="divide-y divide-slate-100">
-        {grouped.map(cat => {
-          const isOpen   = openCat === cat.id;
-          const seuilCnt = cat.items.filter(c => c[3]).length;
-          return (
+        {grouped.map(cat=>{
+          const isOpen=openCat===cat.id;
+          const seuilCnt=cat.items.filter(c=>c[3]).length;
+          return(
             <div key={cat.id}>
-              <button
-                onClick={() => setOpenCat(isOpen ? null : cat.id)}
+              <button onClick={()=>setOpenCat(isOpen?null:cat.id)}
                 className="w-full flex items-center gap-3 px-6 py-4 hover:bg-slate-50 transition-colors text-left">
                 <div className={`w-9 h-9 rounded-xl ${cat.bg} ${cat.txt} flex items-center justify-center text-sm flex-shrink-0`}>
-                  <i className={`fa-solid ${cat.icon}`}></i>
+                  <i className={`fa-solid ${cat.icon}`}/>
                 </div>
                 <div className="flex-1">
                   <span className="font-bold text-sm text-slate-800">{cat.name}</span>
                   <span className="text-xs text-slate-400 ml-2">{cat.items.length} critères · {seuilCnt} seuils</span>
                 </div>
-                <i className={`fa-solid fa-chevron-${isOpen ? 'up' : 'down'} text-slate-300 text-xs flex-shrink-0`}></i>
+                <i className={`fa-solid fa-chevron-${isOpen?'up':'down'} text-slate-300 text-xs`}/>
               </button>
-
-              {isOpen && (
+              {isOpen&&(
                 <div className="pb-3 px-6 pl-16 accordion-body space-y-1.5">
-                  {cat.items.map((cr, idx) => (
-                    <div key={idx} className={`crit-row flex items-start gap-2.5 px-3 py-2 rounded-xl ${cr[3] ? cat.light : ''}`}>
-                      {cr[3]
-                        ? <span className={`mt-0.5 text-sm flex-shrink-0 ${cat.txt}`}>🔒</span>
-                        : <span className="mt-1.5 w-2 h-2 rounded-full bg-slate-300 flex-shrink-0 block"></span>
-                      }
-                      <span className={`text-sm flex-1 ${cr[3] ? 'font-semibold text-slate-800' : 'text-slate-600'}`}>{cr[4]}</span>
+                  {cat.items.map((cr,idx)=>(
+                    <div key={idx} className={`crit-row flex items-start gap-2.5 px-3 py-2 rounded-xl ${cr[3]?cat.light:''}`}>
+                      {cr[3]?<span className={`mt-0.5 text-sm flex-shrink-0 ${cat.txt}`}>🔒</span>:<span className="mt-1.5 w-2 h-2 rounded-full bg-slate-300 flex-shrink-0 block"/>}
+                      <span className={`text-sm flex-1 ${cr[3]?'font-semibold text-slate-800':'text-slate-600'}`}>{cr[4]}</span>
                       <div className="flex gap-0.5 flex-shrink-0 mt-1">
-                        {[1,2,3].map(d => (
-                          <div key={d} className={`w-2.5 h-2.5 rounded-full ${d <= cr[2] ? 'bg-amber-400' : 'bg-slate-200'}`}></div>
-                        ))}
+                        {[1,2,3].map(d=><div key={d} className={`w-2.5 h-2.5 rounded-full ${d<=cr[2]?'bg-amber-400':'bg-slate-200'}`}/>)}
                       </div>
                     </div>
                   ))}
@@ -513,308 +563,605 @@ const CriteriaExplorer = () => {
           );
         })}
       </div>
-
       <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex flex-wrap gap-5 text-xs text-slate-500">
         <span className="flex items-center gap-1.5">🔒 <strong>Seuil obligatoire</strong> — requis pour valider le niveau</span>
         <span className="flex items-center gap-1.5">◾ <strong>Contributif</strong> — améliore le score global</span>
-        <span className="flex items-center gap-1.5"><span className="flex gap-0.5">{[1,2,3].map(d=><span key={d} className="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>)}</span> <strong>Poids</strong> (1 à 3)</span>
+        <span className="flex items-center gap-1.5">
+          <span className="flex gap-0.5">{[1,2,3].map(d=><span key={d} className="w-2 h-2 rounded-full bg-amber-400 inline-block"/>)}</span>
+          <strong>Poids</strong> (1 à 3)
+        </span>
       </div>
     </div>
   );
 };
 
-// ══════════════════════════════════════════════════════════
-//  PAGE COMPONENTS
-// ══════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════════════════ */
+const Nav=({tab,setTab})=>(
+  <div className="sticky top-0 z-40">
+    {/* Disclaimer banner */}
+    <div className="bg-amber-500 text-white text-center py-1.5 px-4 text-xs font-semibold">
+      ⚠️ Projet pédagogique étudiant RSE · Label fictif à vocation exclusivement académique · Non officiel
+    </div>
+    <div className="bg-white shadow-sm border-b border-slate-200">
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="flex items-center justify-between">
+          <span className="font-display text-emerald-700 font-bold text-lg py-3 hidden sm:flex items-center gap-2">
+            <i className="fa-solid fa-paw text-emerald-500"/>Voix Animale
+          </span>
+          <div className="flex overflow-x-auto custom-scroll w-full sm:w-auto">
+            {[
+              {id:'home',    icon:'fa-house',             label:'Accueil'},
+              {id:'map',     icon:'fa-map-location-dot',label:'Carte'},
+              {id:'ranking', icon:'fa-ranking-star',    label:'Classement'},
+              {id:'project', icon:'fa-bullseye',        label:'Projet'},
+              {id:'grid',    icon:'fa-clipboard-check', label:'Grille'},
+            ].map(t=>(
+              <button key={t.id} onClick={()=>setTab(t.id)}
+                className={`py-4 px-3 border-b-2 font-semibold text-sm transition-colors flex items-center gap-2 whitespace-nowrap
+                  ${tab===t.id?'border-emerald-600 text-emerald-700':'border-transparent text-slate-500 hover:text-slate-700'}`}>
+                <i className={`fa-solid ${t.icon}`}/><span className="hidden md:inline">{t.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
-const Navigation = ({ activeTab, setTab }) => (
-  <div className="bg-white shadow-sm sticky top-0 z-40 border-b border-slate-200">
-    <div className="max-w-6xl mx-auto px-4">
-      <div className="flex items-center justify-between">
-        <span className="font-display text-emerald-600 font-bold text-lg py-3 hidden sm:block">
-          <i className="fa-solid fa-paw mr-1.5"></i>Voix Animale
-        </span>
-        <div className="flex space-x-1 md:space-x-2 overflow-x-auto custom-scroll">
-          {[
-            { id:'home',    icon:'fa-house',              label:'Accueil'    },
-            { id:'map',     icon:'fa-map-location-dot',   label:'La Carte'   },
-            { id:'project', icon:'fa-bullseye',           label:'Le Projet'  },
-            { id:'grid',    icon:'fa-clipboard-check',    label:'La Grille'  },
-          ].map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className={`py-4 px-3 border-b-2 font-semibold text-sm transition-colors flex items-center gap-2 whitespace-nowrap
-                ${activeTab === t.id ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
-              <i className={`fa-solid ${t.icon}`}></i><span>{t.label}</span>
-            </button>
+/* ═══════════════════════════════════════════════════════════
+   HOME PAGE
+═══════════════════════════════════════════════════════════ */
+const HomePage=({setTab,openZoo})=>{
+  const top4=[...ZOOS].sort((a,b)=>b.globalPct-a.globalPct).slice(0,4);
+  return(
+    <div>
+      {/* Hero with photo */}
+      <div className="relative overflow-hidden" style={{minHeight:'520px'}}>
+        {/* Photo background */}
+        <div className="absolute inset-0" style={{
+          backgroundImage:"url('https://images.unsplash.com/photo-1534188753412-3e26d0d618d6?w=1600&auto=format&fit=crop&q=80')",
+          backgroundSize:'cover', backgroundPosition:'center 40%'
+        }}/>
+        {/* Gradient overlays */}
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-900/75 to-slate-900/40"/>
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent"/>
+
+        <div className="relative max-w-6xl mx-auto px-4 py-28 flex flex-col md:flex-row items-center gap-12">
+          {/* Left: text */}
+          <div className="flex-1 text-left">
+            <div className="inline-block mb-5 px-4 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-bold tracking-widest uppercase">
+              ⚠️ Projet Pédagogique Étudiant RSE · 2026
+            </div>
+            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl text-white mb-5 leading-tight">
+              Label<br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300 italic">Voix Animale</span>
+            </h1>
+            <p className="text-slate-300 text-lg max-w-xl mb-3 leading-relaxed">
+              Un label RSE fictif à vocation <strong className="text-white">exclusivement pédagogique</strong> pour explorer l'évaluation du bien-être animal en zoologie.
+            </p>
+            <p className="text-slate-400 text-sm max-w-lg mb-8 leading-relaxed">
+              69 critères pondérés · 12 parcs de référence analysés · France & Europe
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <button onClick={()=>setTab('map')} className="bg-emerald-600 hover:bg-emerald-500 text-white px-7 py-3.5 rounded-full font-bold shadow-lg shadow-emerald-500/30 transition-all hover:-translate-y-1 text-sm">
+                <i className="fa-solid fa-map mr-2"/>Explorer la Carte
+              </button>
+              <button onClick={()=>setTab('ranking')} className="bg-white/10 hover:bg-white/20 text-white px-7 py-3.5 rounded-full font-bold border border-white/25 transition-all hover:-translate-y-1 text-sm">
+                <i className="fa-solid fa-ranking-star mr-2"/>Classement
+              </button>
+              <button onClick={()=>setTab('project')} className="bg-white/10 hover:bg-white/20 text-white px-7 py-3.5 rounded-full font-bold border border-white/25 transition-all hover:-translate-y-1 text-sm">
+                <i className="fa-solid fa-circle-info mr-2"/>Le Projet
+              </button>
+            </div>
+          </div>
+
+          {/* Right: level badges */}
+          <div className="hidden md:flex flex-col gap-3 flex-shrink-0">
+            {[4,3,2,1].map(lv=>{
+              const lc=LVL[lv];
+              const cnt=ZOOS.filter(z=>z.level===lv).length;
+              return(
+                <div key={lv} className="flex items-center gap-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-4 py-3 text-white min-w-52">
+                  <div className={`w-9 h-9 rounded-full ${lc.colorCls} flex items-center justify-center flex-shrink-0`}>
+                    <i className={`fa-solid ${lc.icon} text-white text-sm`}/>
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-xs font-bold">Niveau {lv} – {lc.title}</div>
+                    <div className="text-xs text-white/60">{cnt} parc{cnt>1?'s':''} évalué{cnt>1?'s':''}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Photo credit */}
+        <div className="absolute bottom-2 right-3 text-[10px] text-white/30">Photo: Unsplash</div>
+      </div>
+
+      {/* Stats band */}
+      <div className="bg-emerald-700 text-white">
+        <div className="max-w-5xl mx-auto px-4 py-5 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+          {[{n:"12",l:"Parcs évalués"},{n:"69",l:"Critères notés"},{n:"6",l:"Pays couverts"},{n:"4",l:"Niveaux de label"}].map(s=>(
+            <div key={s.l}>
+              <div className="font-display text-3xl font-bold text-emerald-200">{s.n}</div>
+              <div className="text-sm text-emerald-100">{s.l}</div>
+            </div>
           ))}
         </div>
       </div>
-    </div>
-  </div>
-);
 
-// ── HOME ──────────────────────────────────────────────────
-const HomePage = ({ setTab }) => (
-  <div>
-    <div className="relative bg-slate-900 overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_#14532d_0%,_#0f172a_60%)] opacity-90"></div>
-      <div className="absolute inset-0 opacity-5"
-        style={{backgroundImage:'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")'}}>
-      </div>
-      <div className="relative max-w-5xl mx-auto px-4 py-28 text-center">
-        <div className="inline-block mb-6 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-emerald-300 text-sm font-semibold">
-          Projet Étudiant RSE · 2026
-        </div>
-        <h1 className="font-display text-4xl md:text-6xl text-white mb-6 leading-tight">
-          Label Voix Animale<br/>
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300 italic">L'éthique en mouvement.</span>
-        </h1>
-        <p className="text-slate-300 text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-          Valoriser les parcs zoologiques français engagés, et accompagner la transition de ceux en plein développement, pour un bien-être animal optimal.
-        </p>
-        <button onClick={() => setTab('map')}
-          className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-4 rounded-full font-bold shadow-lg shadow-emerald-500/30 transition-all transform hover:-translate-y-1">
-          Découvrir la Carte <i className="fa-solid fa-arrow-right ml-2"></i>
-        </button>
-      </div>
-    </div>
-
-    <div className="max-w-6xl mx-auto px-4 py-20 -mt-10 relative z-10">
-      <div className="grid md:grid-cols-3 gap-8">
-        {[
-          { id:'map',     icon:'fa-map-location-dot', col:'emerald', title:'La Carte',         desc:'Explorez la carte interactive des zoos évalués et leur niveau d\'engagement.' },
-          { id:'project', icon:'fa-bullseye',         col:'blue',    title:'Notre Démarche',   desc:'Une approche RSE bienveillante axée sur l\'encouragement et la transparence.' },
-          { id:'grid',    icon:'fa-clipboard-list',   col:'amber',   title:'La Grille Globale', desc:'Comprenez comment notre score multicritères se traduit en 4 niveaux de label.' },
-        ].map((card, i) => (
-          <div key={card.id} onClick={() => setTab(card.id)}
-            className={`bg-white p-8 rounded-2xl shadow-xl border border-slate-100 hover:shadow-2xl transition-all cursor-pointer group hover:-translate-y-2 fade-up stagger-${i+1}`}>
-            <div className={`w-16 h-16 bg-${card.col}-50 rounded-2xl flex items-center justify-center text-3xl text-${card.col}-500 mb-6 group-hover:bg-${card.col}-500 group-hover:text-white transition-colors`}>
-              <i className={`fa-solid ${card.icon}`}></i>
+      <div className="max-w-6xl mx-auto px-4 py-20">
+        {/* Feature cards */}
+        <div className="grid md:grid-cols-3 gap-6 mb-20">
+          {[
+            {id:'map',     icon:'fa-map-location-dot',col:'emerald',title:'La Carte Interactive',      desc:'12 parcs sur une carte Europe avec leur niveau RSE et un accès direct à chaque analyse.'},
+            {id:'ranking', icon:'fa-ranking-star',    col:'blue',   title:'Le Classement Complet',    desc:'Comparez tous les parcs avec filtres par pays et niveau. Chaque ligne ouvre le détail complet.'},
+            {id:'grid',    icon:'fa-clipboard-list',  col:'amber',  title:'Les 69 Critères détaillés',desc:'Explorez chaque critère par niveau, comprenez la logique de notation et les seuils bloquants.'},
+          ].map((card,i)=>(
+            <div key={card.id} onClick={()=>setTab(card.id)}
+              className={`bg-white p-7 rounded-2xl shadow-xl border border-slate-100 hover:shadow-2xl transition-all cursor-pointer group hover:-translate-y-2 fade-up s${i+1}`}>
+              <div className={`w-14 h-14 bg-${card.col}-50 rounded-2xl flex items-center justify-center text-2xl text-${card.col}-500 mb-5 group-hover:bg-${card.col}-500 group-hover:text-white transition-colors`}>
+                <i className={`fa-solid ${card.icon}`}/>
+              </div>
+              <h3 className="font-display text-lg font-bold text-slate-800 mb-2">{card.title}</h3>
+              <p className="text-slate-500 text-sm leading-relaxed">{card.desc}</p>
+              <div className={`mt-4 text-xs font-bold text-${card.col}-600 flex items-center gap-1`}>
+                Accéder <i className="fa-solid fa-arrow-right text-[10px]"/>
+              </div>
             </div>
-            <h3 className="font-display text-xl font-bold text-slate-800 mb-3">{card.title}</h3>
-            <p className="text-slate-500 text-sm leading-relaxed">{card.desc}</p>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
-      {/* Zoo mini-cards */}
-      <div className="mt-20">
-        <h2 className="font-display text-3xl text-slate-800 text-center mb-2">Parcs actuellement évalués</h2>
-        <p className="text-slate-500 text-center mb-10 text-sm">Cliquez sur un parc pour voir son analyse détaillée</p>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {zoosData.map((zoo, i) => {
-            const lc = LVL_CFG[zoo.level];
-            return (
-              <div key={zoo.id}
-                className={`bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1 overflow-hidden cursor-pointer fade-up stagger-${i+1}`}
-                onClick={() => document.dispatchEvent(new CustomEvent('openZoo', { detail: zoo }))}>
-                <div className={`h-2 ${lc.colorCls}`}></div>
-                <div className="p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-amber-400 text-sm tracking-widest">{zoo.stars}</span>
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${lc.lightCls} ${lc.txtCls}`}>{lc.title}</span>
-                  </div>
-                  <div className="font-display font-bold text-slate-800 text-sm mb-1 leading-snug">{zoo.name}</div>
-                  <div className="text-xs text-slate-400 mb-3"><i className="fa-solid fa-location-dot mr-1"></i>{zoo.city}</div>
-                  <div className="bar-track">
-                    <div className="bar-fill" style={{ width:`${zoo.globalPct}%`, backgroundColor: pctColor(zoo.globalPct) }}/>
-                  </div>
-                  <div className="flex justify-between text-xs text-slate-400 mt-1">
-                    <span>Score global</span><span className="font-bold text-slate-600">{zoo.globalPct}%</span>
+        {/* Top 4 */}
+        <div>
+          <div className="flex items-end justify-between mb-8">
+            <div>
+              <h2 className="font-display text-3xl text-slate-800 mb-1">Les parcs en tête du classement</h2>
+              <p className="text-slate-500 text-sm">Les 4 meilleures évaluations de notre panel 2026</p>
+            </div>
+            <button onClick={()=>setTab('ranking')} className="text-emerald-600 text-sm font-bold hover:underline hidden md:flex items-center gap-1">
+              Voir les 12 <i className="fa-solid fa-arrow-right text-xs"/>
+            </button>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {top4.map((zoo,i)=>{
+              const lc=LVL[zoo.level];
+              return(
+                <div key={zoo.id} className={`bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden cursor-pointer zoo-card fade-up s${i+1}`} onClick={()=>openZoo(zoo)}>
+                  <div className={`h-2 ${lc.colorCls}`}/>
+                  <div className="p-5">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xl">{zoo.flag}</span>
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${lc.lightCls} ${lc.txtCls}`}>{lc.title}</span>
+                    </div>
+                    <div className="font-display font-bold text-slate-800 text-sm mb-0.5 leading-snug">{zoo.short}</div>
+                    <div className="text-xs text-slate-400 mb-3"><i className="fa-solid fa-location-dot mr-1"/>{zoo.city}</div>
+                    <div className="bar-track">
+                      <div className="bar-fill" style={{width:`${zoo.globalPct}%`,backgroundColor:pctColor(zoo.globalPct)}}/>
+                    </div>
+                    <div className="flex justify-between text-xs mt-1.5">
+                      <span className="text-slate-400">Score</span>
+                      <span className={`font-bold ${lc.txtCls}`}>{zoo.globalPct}%</span>
+                    </div>
+                    {zoo.certifs.length>0&&(
+                      <div className="flex flex-wrap gap-1 mt-3">
+                        {zoo.certifs.slice(0,3).map(c=><span key={c} className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-semibold">{c}</span>)}
+                        {zoo.certifs.length>3&&<span className="text-[10px] text-slate-400">+{zoo.certifs.length-3}</span>}
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-// ── MAP ───────────────────────────────────────────────────
-const MapPage = ({ setSelectedZoo }) => {
-  useEffect(() => {
-    const map = L.map('map-container').setView([46.6, 1.9], 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap' }).addTo(map);
-
-    zoosData.forEach(zoo => {
-      const lc = LVL_CFG[zoo.level];
-      const icon = L.divIcon({
-        className:'custom-leaflet-icon',
-        html:`<div class="relative flex items-center justify-center w-12 h-12">
-          <div class="${lc.colorCls} w-10 h-10 rounded-full flex items-center justify-center text-white shadow-lg border-2 border-white hover:scale-110 transition-transform cursor-pointer">
-            <i class="fa-solid ${lc.icon} text-base"></i>
+              );
+            })}
           </div>
-        </div>`,
-        iconSize:[48,48], iconAnchor:[24,24], popupAnchor:[0,-20],
-      });
-      const marker = L.marker([zoo.lat, zoo.lng], { icon }).addTo(map);
-
-      const div = document.createElement('div');
-      div.className = "text-center p-1 font-sans";
-      div.innerHTML = `
-        <div class="font-bold text-slate-800 text-sm mb-0.5">${zoo.name}</div>
-        <div class="text-xs text-slate-500 mb-1">${zoo.city}</div>
-        <div class="text-amber-400 mb-2 text-xs tracking-widest">${zoo.stars}</div>
-        <div class="w-full bg-slate-200 rounded-full h-1.5 mb-2"><div class="h-full rounded-full" style="width:${zoo.globalPct}%;background:${pctColor(zoo.globalPct)}"></div></div>
-        <div class="text-xs text-slate-500 mb-2">Score global : <strong>${zoo.globalPct}%</strong></div>
-        <button id="zoo-btn-${zoo.id}" class="w-full ${lc.colorCls} text-white px-3 py-1.5 rounded-full text-xs font-bold">Voir le détail</button>
-      `;
-      marker.bindPopup(div);
-      marker.on('popupopen', () => {
-        setTimeout(() => {
-          const btn = document.getElementById(`zoo-btn-${zoo.id}`);
-          if (btn) btn.onclick = () => { setSelectedZoo(zoo); marker.closePopup(); };
-        }, 10);
-      });
-    });
-    return () => map.remove();
-  }, []);
-
-  return (
-    <div className="fade-in max-w-6xl mx-auto px-4 py-12">
-      <div className="text-center mb-10">
-        <h2 className="font-display text-3xl font-bold text-slate-800 mb-3">Carte des Parcs Accompagnés</h2>
-        <p className="text-slate-500 max-w-2xl mx-auto mb-6 text-sm">Cliquez sur un marqueur pour consulter l'engagement RSE du parc et accéder à sa grille de notation.</p>
-        <div className="flex flex-wrap justify-center gap-3 text-xs font-bold">
-          {[4,3,2,1].map(lv => {
-            const lc = LVL_CFG[lv];
-            return (
-              <span key={lv} className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full shadow-sm border border-slate-100">
-                <span className={`w-3 h-3 rounded-full ${lc.colorCls}`}></span>
-                {lv} – {lc.title}
-              </span>
-            );
-          })}
         </div>
-      </div>
-      <div className="bg-white p-2 md:p-3 rounded-3xl shadow-xl border border-slate-200">
-        <div id="map-container" className="w-full h-[580px]"></div>
       </div>
     </div>
   );
 };
 
-// ── PROJECT ───────────────────────────────────────────────
-const ProjectPage = () => (
-  <div className="fade-in max-w-4xl mx-auto px-4 py-12">
-    <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-slate-100">
-      <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-4xl mb-6 mx-auto">
-        <i className="fa-solid fa-bullseye"></i>
-      </div>
-      <h2 className="font-display text-3xl md:text-4xl text-slate-800 text-center mb-8">Notre Philosophie d'Action</h2>
-      <div className="space-y-7 text-slate-600 leading-relaxed text-base">
-        <p>"Label Voix Animale" est un projet étudiant ancré dans la <strong>Responsabilité Sociétale des Entreprises (RSE)</strong>. Face aux attentes sociétales concernant le bien-être animal, notre rôle n'est pas de juger, mais d'accompagner.</p>
-        <div className="border-l-4 border-blue-500 pl-6 py-4 bg-blue-50 rounded-r-xl">
-          <h3 className="text-lg font-bold text-blue-900 mb-2">Accompagner plutôt que punir</h3>
-          <p className="text-blue-800 text-sm">Nous savons que la gestion d'un parc est complexe et les héritages architecturaux lourds. Notre label vise à <strong>valoriser les efforts</strong>, mettre en lumière les bonnes pratiques et encourager de manière constructive les structures qui entament leur modernisation.</p>
+/* ═══════════════════════════════════════════════════════════
+   MAP PAGE — clic direct sur marqueur + filtre par niveau
+═══════════════════════════════════════════════════════════ */
+const MapPage=({openZoo})=>{
+  const [levelFilter,setLevelFilter]=useState('all');
+  const mapRef=useRef(null);
+  const markersRef=useRef([]);
+
+  // Build/rebuild markers whenever filter changes
+  useEffect(()=>{
+    if(!mapRef.current){
+      mapRef.current=L.map('map-container').setView([49.5,5.0],5);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(mapRef.current);
+    }
+    // Remove old markers
+    markersRef.current.forEach(m=>m.remove());
+    markersRef.current=[];
+
+    const visible=levelFilter==='all'?ZOOS:ZOOS.filter(z=>z.level===parseInt(levelFilter));
+
+    visible.forEach(zoo=>{
+      const lc=LVL[zoo.level];
+      const bgColor=pctColor(zoo.globalPct);
+      const icon=L.divIcon({
+        className:'custom-leaflet-icon',
+        html:`<div style="position:relative;width:48px;height:48px;cursor:pointer">
+          <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+            border:3px solid white;box-shadow:0 6px 16px rgba(0,0,0,.35);font-size:20px;transition:transform .15s"
+            onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'">${zoo.flag}</div>
+          <div style="position:absolute;bottom:0;right:0;width:18px;height:18px;border-radius:50%;
+            display:flex;align-items:center;justify-content:center;font-size:9px;color:white;font-weight:bold;
+            border:2px solid white;background:${bgColor}">${zoo.level}</div>
+        </div>`,
+        iconSize:[48,48],iconAnchor:[24,24],
+      });
+      const marker=L.marker([zoo.lat,zoo.lng],{icon}).addTo(mapRef.current);
+      // Direct click → open modal immediately
+      marker.on('click',()=>openZoo(zoo));
+      // Tooltip on hover (lightweight)
+      marker.bindTooltip(`<strong>${zoo.short}</strong><br/><span style="color:#64748b;font-size:11px">${zoo.flag} ${zoo.city} · ${zoo.globalPct}%</span>`,{
+        direction:'top',offset:[0,-26],className:'leaflet-tooltip-custom',
+      });
+      markersRef.current.push(marker);
+    });
+    return()=>{};
+  },[levelFilter,openZoo]);
+
+  // Cleanup on unmount
+  useEffect(()=>()=>{
+    if(mapRef.current){mapRef.current.remove();mapRef.current=null;}
+  },[]);
+
+  return(
+    <div className="fade-in max-w-6xl mx-auto px-4 py-12">
+      <div className="text-center mb-8">
+        <h2 className="font-display text-3xl font-bold text-slate-800 mb-3">Carte des 12 Parcs Évalués</h2>
+        <p className="text-slate-500 max-w-2xl mx-auto mb-6 text-sm">
+          <i className="fa-solid fa-hand-pointer mr-1 text-emerald-600"/>
+          Cliquez directement sur un marqueur pour ouvrir l'évaluation complète du parc.
+        </p>
+
+        {/* Level filter buttons */}
+        <div className="flex flex-wrap justify-center gap-3">
+          <button onClick={()=>setLevelFilter('all')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold border transition-all
+              ${levelFilter==='all'?'bg-slate-800 text-white border-slate-800 shadow-lg':'bg-white text-slate-500 border-slate-200 hover:border-slate-400'}`}>
+            <i className="fa-solid fa-globe"/> Tous ({ZOOS.length})
+          </button>
+          {[4,3,2,1].map(lv=>{
+            const lc=LVL[lv];const cnt=ZOOS.filter(z=>z.level===lv).length;const act=levelFilter===String(lv);
+            return(
+              <button key={lv} onClick={()=>setLevelFilter(act?'all':String(lv))}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold border transition-all
+                  ${act?`${lc.colorCls} text-white border-transparent shadow-lg scale-105`:`bg-white ${lc.txtCls} border-slate-200 hover:border-slate-300 hover:shadow-sm`}`}>
+                <i className={`fa-solid ${lc.icon}`}/>
+                Niv.{lv} – {lc.title} <span className={act?'text-white/70':'text-slate-400'}>({cnt})</span>
+              </button>
+            );
+          })}
         </div>
-        <p>En proposant une évaluation transparente basée sur un score pondéré, nous offrons au public une clé de lecture claire, tout en fournissant aux parcs un retour neutre pour soutenir leur développement durable.</p>
-        <div className="grid sm:grid-cols-3 gap-5 pt-2">
+      </div>
+
+      <div className="bg-white p-2 md:p-3 rounded-3xl shadow-xl border border-slate-200">
+        <div id="map-container" className="w-full h-[580px]"/>
+      </div>
+      <p className="text-center text-xs text-slate-400 mt-3">
+        <i className="fa-solid fa-circle-info mr-1"/>
+        Un clic sur le marqueur ouvre directement la fiche d'évaluation · Survolez pour voir le nom
+      </p>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════
+   RANKING PAGE
+═══════════════════════════════════════════════════════════ */
+const RankingPage=({openZoo})=>{
+  const [filter,setFilter]=useState('all');
+  const [search,setSearch]=useState('');
+  const countries=[...new Set(ZOOS.map(z=>z.country))].sort();
+  const sorted=useMemo(()=>{
+    let list=[...ZOOS].sort((a,b)=>b.globalPct-a.globalPct);
+    if(['1','2','3','4'].includes(filter)) list=list.filter(z=>z.level===parseInt(filter));
+    else if(filter!=='all') list=list.filter(z=>z.country===filter);
+    if(search) list=list.filter(z=>z.name.toLowerCase().includes(search.toLowerCase())||z.city.toLowerCase().includes(search.toLowerCase()));
+    return list;
+  },[filter,search]);
+
+  return(
+    <div className="fade-in max-w-5xl mx-auto px-4 py-12">
+      <div className="text-center mb-10">
+        <h2 className="font-display text-3xl font-bold text-slate-800 mb-3">Classement Général — 12 Parcs</h2>
+        <p className="text-slate-500 text-sm">Triés par score global pondéré · Cliquez sur un parc pour le détail complet</p>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mb-6 flex flex-wrap gap-4 items-center">
+        <div className="relative flex-1 min-w-48">
+          <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"/>
+          <input className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+            placeholder="Rechercher un parc ou une ville…" value={search} onChange={e=>setSearch(e.target.value)}/>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button onClick={()=>setFilter('all')} className={`text-xs font-bold px-3 py-1.5 rounded-full border transition-colors ${filter==='all'?'bg-slate-800 text-white border-slate-800':'bg-white text-slate-500 border-slate-200 hover:border-slate-400'}`}>Tous</button>
+          {[4,3,2,1].map(lv=>{
+            const lc=LVL[lv];
+            return <button key={lv} onClick={()=>setFilter(String(lv))} className={`text-xs font-bold px-3 py-1.5 rounded-full border transition-colors ${filter===String(lv)?`${lc.colorCls} text-white border-transparent`:`bg-white ${lc.txtCls} border-slate-200 hover:border-slate-400`}`}>Niv.{lv}</button>;
+          })}
+          {countries.map(c=><button key={c} onClick={()=>setFilter(c)} className={`text-xs font-bold px-3 py-1.5 rounded-full border transition-colors ${filter===c?'bg-slate-700 text-white border-slate-700':'bg-white text-slate-500 border-slate-200 hover:border-slate-400'}`}>{ZOOS.find(z=>z.country===c)?.flag} {c}</button>)}
+        </div>
+      </div>
+
+      {/* List */}
+      <div className="space-y-3">
+        {sorted.length===0&&(
+          <div className="text-center py-12 text-slate-400">
+            <i className="fa-solid fa-magnifying-glass text-3xl mb-3 block"/>
+            Aucun parc ne correspond à cette recherche.
+          </div>
+        )}
+        {sorted.map((zoo)=>{
+          const rank=ZOOS.sort((a,b)=>b.globalPct-a.globalPct).findIndex(z=>z.id===zoo.id)+1;
+          const lc=LVL[zoo.level];
+          return(
+            <div key={zoo.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer zoo-card overflow-hidden" onClick={()=>openZoo(zoo)}>
+              <div className="flex items-center gap-4 p-5">
+                {/* Rank */}
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-display font-bold text-lg flex-shrink-0 ${rank<=3?`${lc.colorCls} text-white`:'bg-slate-100 text-slate-400'}`}>
+                  {rank}
+                </div>
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-lg leading-none">{zoo.flag}</span>
+                    <span className="font-bold text-slate-800 text-sm">{zoo.name}</span>
+                    <span className="text-xs text-slate-400">{zoo.city}</span>
+                    {zoo.certifs.slice(0,2).map(c=><span key={c} className="hidden sm:inline text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-semibold">{c}</span>)}
+                  </div>
+                  {/* Mini category bars */}
+                  <div className="hidden md:flex gap-2 mt-2 items-end">
+                    {CATS.map(cat=>(
+                      <div key={cat.id} title={cat.name} className="flex flex-col items-center gap-0.5">
+                        <div style={{height:'24px',width:'8px',background:'#e2e8f0',borderRadius:'4px',overflow:'hidden',display:'flex',alignItems:'flex-end'}}>
+                          <div style={{width:'100%',height:`${zoo.catPcts[cat.id]}%`,background:cat.bar,borderRadius:'4px'}}/>
+                        </div>
+                        <i className={`fa-solid ${cat.icon} text-[8px] ${cat.txt}`}/>
+                      </div>
+                    ))}
+                    <span className="text-xs text-slate-400 ml-1">catégories</span>
+                  </div>
+                </div>
+                {/* Score + label */}
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className="text-right hidden sm:block">
+                    <div className={`font-display text-2xl font-bold ${lc.txtCls}`}>{zoo.globalPct}%</div>
+                    <div className="w-20 bar-track mt-1">
+                      <div className="bar-fill" style={{width:`${zoo.globalPct}%`,backgroundColor:pctColor(zoo.globalPct)}}/>
+                    </div>
+                  </div>
+                  <div className={`${lc.colorCls} text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 flex-shrink-0`}>
+                    <i className={`fa-solid ${lc.icon}`}/>
+                    <span className="hidden sm:inline">{lc.title}</span>
+                    <span className="sm:hidden">{zoo.level}</span>
+                  </div>
+                  <i className="fa-solid fa-chevron-right text-slate-300 text-xs"/>
+                </div>
+              </div>
+              {/* Seuil stripe */}
+              <div className="flex border-t border-slate-100 px-5 py-2 gap-4 bg-slate-50/60">
+                {[1,2,3,4].map(lv=>{
+                  const [p,t]=zoo.seuils[lv];const ok=p===t;
+                  return(
+                    <span key={lv} className={`text-xs flex items-center gap-1 font-semibold ${ok?'text-emerald-600':'text-slate-400'}`}>
+                      <i className={`fa-solid ${ok?'fa-circle-check':'fa-circle-xmark'} text-xs`}/>
+                      N{lv} {p}/{t}
+                    </span>
+                  );
+                })}
+                <span className="ml-auto text-xs text-slate-300 flex items-center gap-1">
+                  <i className="fa-solid fa-arrow-up-right-from-square text-[10px]"/>Voir détail
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════
+   PROJECT PAGE
+═══════════════════════════════════════════════════════════ */
+const ProjectPage=()=>(
+  <div className="fade-in max-w-4xl mx-auto px-4 py-12 space-y-8">
+
+    {/* ── DISCLAIMER LÉGAL ── */}
+    <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-6 flex gap-4">
+      <div className="text-3xl flex-shrink-0">⚠️</div>
+      <div>
+        <h3 className="font-bold text-amber-900 text-base mb-2">Avertissement important – Projet pédagogique étudiant</h3>
+        <p className="text-amber-800 text-sm leading-relaxed mb-3">
+          "Label Voix Animale" est un <strong>projet fictif réalisé dans le cadre d'un cours de RSE</strong> par des étudiants. Il ne constitue en aucun cas un label officiel, une certification reconnue, ni une expertise professionnelle en bien-être animal ou en droit des zoos.
+        </p>
+        <ul className="text-amber-800 text-sm space-y-1.5 leading-relaxed">
+          <li className="flex gap-2"><span>•</span><span>Les scores et niveaux attribués résultent d'une grille pédagogique construite à des fins académiques uniquement, et non d'un audit terrain ou d'une inspection officielle.</span></li>
+          <li className="flex gap-2"><span>•</span><span>Les informations citées proviennent de sources publiques (sites officiels, rapports annuels, presse) disponibles au moment de la rédaction (2026). Elles peuvent être incomplètes ou avoir évolué.</span></li>
+          <li className="flex gap-2"><span>•</span><span>Aucun des établissements évalués n'a été contacté ni n'a validé les informations présentées. Les analyses reflètent uniquement une perspective étudiante externe.</span></li>
+          <li className="flex gap-2"><span>•</span><span>Ce site n'a pas vocation à porter atteinte à la réputation des établissements mentionnés. En cas d'erreur factuelle, nous nous engageons à la corriger.</span></li>
+        </ul>
+      </div>
+    </div>
+
+    {/* ── PHILOSOPHIE ── */}
+    <div className="bg-white rounded-3xl p-8 md:p-10 shadow-xl border border-slate-100">
+      <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl mb-5 mx-auto">
+        <i className="fa-solid fa-bullseye"/>
+      </div>
+      <h2 className="font-display text-2xl md:text-3xl text-slate-800 text-center mb-6">Notre Philosophie d'Action</h2>
+      <div className="space-y-5 text-slate-600 leading-relaxed text-sm">
+        <p>Dans le cadre de notre cours de <strong>Responsabilité Sociétale des Entreprises (RSE)</strong>, nous avons imaginé un label pédagogique pour explorer comment évaluer le bien-être animal dans les zoos. Nous avons conçu une grille de 69 critères répartis en 6 catégories, en nous appuyant sur les standards EAZA, les réglementations françaises (DDPP) et la littérature académique en zoologie.</p>
+
+        <div className="border-l-4 border-blue-500 pl-5 py-4 bg-blue-50 rounded-r-xl">
+          <h3 className="text-base font-bold text-blue-900 mb-2">Pourquoi un label RSE sur les zoos ?</h3>
+          <p className="text-blue-800 text-sm">Les zoos représentent un enjeu RSE croissant : entre conservation, éducation, tourisme et bien-être animal, les attentes sociétales et réglementaires évoluent rapidement. Ce projet vise à <strong>explorer concrètement ces tensions</strong> à travers une grille multicritères, et à produire une analyse constructive plutôt que punitive.</p>
+        </div>
+
+        <div className="grid sm:grid-cols-3 gap-4">
           {[
-            { icon:"fa-magnifying-glass", color:"emerald", title:"Évaluation objective",  desc:"69 critères répartis en 6 catégories, avec pondération selon leur impact." },
-            { icon:"fa-shield-halved",    color:"blue",    title:"Seuils constructifs",   desc:"Des critères-seuils obligatoires définissent chaque niveau, sans connotation négative." },
-            { icon:"fa-chart-line",       color:"amber",   title:"Suivi dans le temps",   desc:"Chaque parc peut progresser et voir son label évoluer avec ses efforts." },
-          ].map(card => (
-            <div key={card.title} className={`bg-${card.color}-50 p-5 rounded-2xl border border-${card.color}-100`}>
-              <i className={`fa-solid ${card.icon} text-${card.color}-500 text-2xl mb-3`}></i>
-              <div className={`font-bold text-${card.color}-900 text-sm mb-1`}>{card.title}</div>
+            {icon:"fa-magnifying-glass",color:"emerald",title:"Grille de 69 critères",desc:"6 catégories, pondération 1 à 3 selon l'impact, basée sur les standards EAZA et la réglementation française."},
+            {icon:"fa-shield-halved",   color:"blue",   title:"Démarche constructive",desc:"Chaque seuil non-validé est associé à une recommandation concrète. Le but est d'encourager, pas de sanctionner."},
+            {icon:"fa-chart-line",      color:"amber",  title:"Label évolutif",       desc:"Le modèle est conçu pour évoluer. Chaque établissement peut progresser par ses propres investissements."},
+          ].map(card=>(
+            <div key={card.title} className={`bg-${card.color}-50 p-4 rounded-2xl border border-${card.color}-100`}>
+              <i className={`fa-solid ${card.icon} text-${card.color}-500 text-xl mb-2`}/>
+              <div className={`font-bold text-${card.color}-900 text-xs mb-1`}>{card.title}</div>
               <p className={`text-${card.color}-800 text-xs leading-relaxed`}>{card.desc}</p>
             </div>
           ))}
         </div>
       </div>
     </div>
+
+    {/* ── POURQUOI CES ZOOS ── */}
+    <div className="bg-white rounded-3xl p-8 md:p-10 shadow-xl border border-slate-100">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
+          <i className="fa-solid fa-filter"/>
+        </div>
+        <h2 className="font-display text-2xl text-slate-800">Pourquoi ces 12 parcs ?</h2>
+      </div>
+      <p className="text-slate-500 text-sm mb-6 ml-13">Notre panel a été construit pour être <strong>diversifié et représentatif</strong> : différentes tailles, différents pays, différents formats, différents niveaux d'engagement. Voici les critères de sélection pour chaque établissement.</p>
+
+      <div className="grid sm:grid-cols-2 gap-3">
+        {ZOOS.map(zoo=>{
+          const lc=LVL[zoo.level];
+          return(
+            <div key={zoo.id} className={`rounded-xl p-4 border ${lc.lightCls} border-l-4 ${lc.bdCls}`}>
+              <div className="flex items-start gap-3">
+                <span className="text-xl flex-shrink-0 mt-0.5">{zoo.flag}</span>
+                <div>
+                  <div className={`font-bold text-sm ${lc.txtCls} mb-1`}>{zoo.short}</div>
+                  <p className="text-slate-600 text-xs leading-relaxed">{zoo.why}</p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-6 bg-slate-50 rounded-xl p-4 border border-slate-200 text-xs text-slate-500 leading-relaxed">
+        <i className="fa-solid fa-circle-info text-slate-400 mr-1.5"/>
+        <strong>Biais de sélection assumé :</strong> ce panel surreprésente intentionnellement les zoos français et les établissements EAZA, pour des raisons de disponibilité des données publiques en français. Un label professionnel couvrirait un panel bien plus large et international.
+      </div>
+    </div>
+
+    {/* ── PANEL ── */}
+    <div className="bg-white rounded-3xl p-8 md:p-10 shadow-xl border border-slate-100">
+      <h3 className="font-display text-xl text-slate-800 mb-5">Résumé du panel par niveau</h3>
+      <div className="grid sm:grid-cols-2 gap-3">
+        {[4,3,2,1].map(lv=>{
+          const lc=LVL[lv];
+          const zoos=ZOOS.filter(z=>z.level===lv).sort((a,b)=>b.globalPct-a.globalPct);
+          return(
+            <div key={lv} className={`${lc.lightCls} rounded-xl p-4 border-l-4 ${lc.bdCls}`}>
+              <div className={`flex items-center gap-2 font-bold text-sm ${lc.txtCls} mb-2`}>
+                <i className={`fa-solid ${lc.icon}`}/> Niveau {lv} – {lc.title} <span className="text-slate-400 font-normal">({zoos.length})</span>
+              </div>
+              <ul className="space-y-1">
+                {zoos.map(z=>(
+                  <li key={z.id} className="text-xs text-slate-600 flex items-center gap-2">
+                    <span>{z.flag}</span>{z.short}<span className={`ml-auto font-bold ${lc.txtCls}`}>{z.globalPct}%</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+
   </div>
 );
 
-// ── GRID PAGE ─────────────────────────────────────────────
-const GridPage = () => (
+/* ═══════════════════════════════════════════════════════════
+   GRID PAGE
+═══════════════════════════════════════════════════════════ */
+const GridPage=()=>(
   <div className="fade-in max-w-5xl mx-auto px-4 py-12">
     <div className="text-center mb-12">
       <h2 className="font-display text-3xl font-bold text-slate-800 mb-4">La Grille d'Évaluation</h2>
       <p className="text-slate-500 max-w-3xl mx-auto text-sm leading-relaxed">
-        Notre label repose sur un système de <strong>score global pondéré</strong> calculé sur 69 critères répartis en 6 catégories.
-        En fonction de la note finale <em>et</em> des critères-seuils validés, le parc obtient l'un des 4 niveaux ci-dessous.
+        Score global pondéré calculé sur 69 critères répartis en 6 catégories. En fonction de la note finale <em>et</em> des critères-seuils validés, chaque parc obtient l'un des 4 niveaux ci-dessous.
       </p>
     </div>
-
-    {/* Level cards */}
     <div className="grid md:grid-cols-2 gap-5 mb-6">
       {[
-        { lv:4, desc:"Le bien-être animal est au cœur de l'ADN du parc. Les espaces sont immersifs, tous les comportements naturels sont exprimés, et le parc agit comme acteur majeur de la conservation internationale.", thr:"≥ 80%" },
-        { lv:3, desc:"Engagement très solide : alimentation, soins, espaces et transparence répondent à des standards élevés. Une démarche éducative structurée est en place.", thr:"≥ 60%" },
-        { lv:2, desc:"Une dynamique positive est en cours. Le parc investit dans la modernisation de ses installations, et les équipes déploient de réels efforts malgré certaines contraintes.", thr:"≥ 40%" },
-        { lv:1, desc:"Le parc respecte le cadre légal et montre un intérêt pour les standards modernes du bien-être animal. Ce label encourage vivement la structuration et les nouvelles pratiques.", thr:"≥ 20%" },
-      ].map(({ lv, desc, thr }) => {
-        const lc = LVL_CFG[lv];
-        return (
+        {lv:4,thr:"≥ 80%",desc:"Référence mondiale. Immersion totale, conservation active, audits indépendants, équipements SOTA et transparence complète."},
+        {lv:3,thr:"≥ 60%",desc:"Démarche éthique structurée. Politique de reproduction transparente, gestion de fin de vie, contenus pédagogiques actifs."},
+        {lv:2,thr:"≥ 40%",desc:"Bien-être démontré. Enrichissements, groupes sociaux, suivi sanitaire, formation, et refus des spectacles contraignants."},
+        {lv:1,thr:"≥ 20%",desc:"Cadre légal complet. Licence préfectorale, certificat de capacité, vétérinaire, alimentation conforme, traçabilité."},
+      ].map(({lv,thr,desc})=>{
+        const lc=LVL[lv];
+        return(
           <div key={lv} className={`bg-white p-6 rounded-2xl shadow-sm border border-slate-200 border-l-8 ${lc.bdCls} hover:shadow-md transition-shadow`}>
             <div className="flex items-center gap-3 mb-2">
-              <div className={`${lc.txtCls} text-2xl`}><i className={`fa-solid ${lc.icon}`}></i></div>
-              <h3 className="font-display font-bold text-xl text-slate-800">Niveau {lv} : {lc.title}</h3>
+              <div className={`${lc.txtCls} text-2xl`}><i className={`fa-solid ${lc.icon}`}/></div>
+              <h3 className="font-display font-bold text-xl text-slate-800">Niveau {lv} – {lc.title}</h3>
               <span className={`ml-auto text-xs font-bold px-2 py-1 rounded-full ${lc.lightCls} ${lc.txtCls}`}>{thr}</span>
             </div>
-            <div className="text-amber-400 mb-3 tracking-widest text-sm">{'⭐'.repeat(lv)}</div>
-            <p className="text-slate-600 text-sm leading-relaxed">{desc}</p>
-            <div className="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
-              <i className="fa-solid fa-lock text-xs mr-1.5"></i>
-              <strong>{SEUILS_N[lv]} critère{SEUILS_N[lv]>1?'s':''} seuil</strong> obligatoire{SEUILS_N[lv]>1?'s':''} spécifiques à ce niveau
+            <p className="text-slate-600 text-sm leading-relaxed mb-3">{desc}</p>
+            <div className="pt-3 border-t border-slate-100 text-xs text-slate-500">
+              <i className="fa-solid fa-lock text-xs mr-1.5"/>
+              <strong>{SEUILS_N[lv]} critère{SEUILS_N[lv]>1?'s':''} seuil</strong> obligatoire{SEUILS_N[lv]>1?'s':''} à ce niveau
             </div>
           </div>
         );
       })}
     </div>
-
-    {/* Threshold note */}
     <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 mb-2">
-      <i className="fa-solid fa-circle-info text-amber-500 text-lg mt-0.5 flex-shrink-0"></i>
+      <i className="fa-solid fa-circle-info text-amber-500 text-lg mt-0.5 flex-shrink-0"/>
       <p className="text-amber-800 text-sm leading-relaxed">
-        Les niveaux sont <strong>cumulatifs</strong> : pour obtenir le Niveau 3, tous les critères-seuils des niveaux 1, 2 <em>et</em> 3 doivent être atteints (score ≥ 2/3), et le score global doit dépasser 60%.
+        Les niveaux sont <strong>cumulatifs</strong> : pour le Niveau 3, tous les seuils N1+N2+N3 doivent être atteints (score ≥ 2/3) <em>et</em> le score global doit dépasser 60%.
       </p>
     </div>
-
-    {/* Full criteria explorer */}
-    <CriteriaExplorer />
+    <CriteriaExplorer/>
   </div>
 );
 
-// ══════════════════════════════════════════════════════════
-//  APP ROOT
-// ══════════════════════════════════════════════════════════
-const App = () => {
-  const [activeTab,    setTab]         = useState('home');
-  const [selectedZoo,  setSelectedZoo] = useState(null);
-
-  // Allow zoo cards on homepage to open modal
-  useEffect(() => {
-    const handler = e => setSelectedZoo(e.detail);
-    document.addEventListener('openZoo', handler);
-    return () => document.removeEventListener('openZoo', handler);
-  }, []);
-
-  return (
+/* ═══════════════════════════════════════════════════════════
+   APP
+═══════════════════════════════════════════════════════════ */
+const App=()=>{
+  const [tab,setTab]=useState('home');
+  const [zoo,setZoo]=useState(null);
+  return(
     <div className="min-h-screen flex flex-col">
-      <Navigation activeTab={activeTab} setTab={setTab} />
+      <Nav tab={tab} setTab={setTab}/>
       <main className="flex-grow">
-        {activeTab === 'home'    && <HomePage    setTab={setTab} />}
-        {activeTab === 'map'     && <MapPage     setSelectedZoo={setSelectedZoo} />}
-        {activeTab === 'project' && <ProjectPage />}
-        {activeTab === 'grid'    && <GridPage />}
+        {tab==='home'    && <HomePage    setTab={setTab} openZoo={setZoo}/>}
+        {tab==='map'     && <MapPage     openZoo={setZoo}/>}
+        {tab==='ranking' && <RankingPage openZoo={setZoo}/>}
+        {tab==='project' && <ProjectPage/>}
+        {tab==='grid'    && <GridPage/>}
       </main>
       <footer className="bg-slate-900 text-slate-400 py-8 text-center border-t border-slate-800 mt-12">
         <div className="max-w-4xl mx-auto px-4">
-          <p className="font-display text-emerald-400 text-lg mb-1"><i className="fa-solid fa-paw mr-2"></i>Label Voix Animale</p>
-          <p className="text-sm">Projet Étudiant RSE © 2026 · Une démarche constructive pour le bien-être animal.</p>
+          <p className="font-display text-emerald-400 text-lg mb-1"><i className="fa-solid fa-paw mr-2"/>Label Voix Animale</p>
+          <p className="text-sm">Projet Étudiant RSE © 2026 · 12 parcs évalués · France & Europe</p>
+          <p className="text-xs text-slate-600 mt-1">Une démarche constructive pour le bien-être animal.</p>
         </div>
       </footer>
-      <Modal zoo={selectedZoo} onClose={() => setSelectedZoo(null)} />
+      <Modal zoo={zoo} onClose={()=>setZoo(null)}/>
     </div>
   );
 };
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>
 </html>
