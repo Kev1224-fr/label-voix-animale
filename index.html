@@ -584,15 +584,16 @@ const Nav=({tab,setTab})=>(
     <div className="bg-amber-500 text-white text-center py-1.5 px-4 text-xs font-semibold">
       ⚠️ Projet pédagogique étudiant RSE · Label à vocation exclusivement académique
     </div>
+    
     <div className="bg-white shadow-sm border-b border-slate-200">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex items-center justify-between">
           <span className="font-display text-emerald-700 font-bold text-lg py-3 hidden sm:flex items-center gap-2">
-            <i className="fa-solid fa-paw text-emerald-500"/>Voix Animale
+           <i className="fa-solid fa-paw text-emerald-500"/>Voix Animale
           </span>
           <div className="flex overflow-x-auto custom-scroll w-full sm:w-auto">
             {[
-              {id:'home',    icon:'fa-house',             label:'Accueil'},
+              {id:'home',    icon:'fa-house',           label:'Accueil'},
               {id:'map',     icon:'fa-map-location-dot',label:'Carte'},
               {id:'ranking', icon:'fa-ranking-star',    label:'Classement'},
               {id:'project', icon:'fa-bullseye',        label:'Projet'},
@@ -765,93 +766,108 @@ const HomePage=({setTab,openZoo})=>{
 };
 
 /* ═══════════════════════════════════════════════════════════
-   MAP PAGE — clic direct sur marqueur + filtre par niveau
+   MAP PAGE — clic direct + filtre par niveau
 ═══════════════════════════════════════════════════════════ */
 const MapPage=({openZoo})=>{
   const [levelFilter,setLevelFilter]=useState('all');
   const mapRef=useRef(null);
   const markersRef=useRef([]);
+  const openZooRef=useRef(openZoo);
+  useEffect(()=>{openZooRef.current=openZoo;},[openZoo]);
 
-  // Build/rebuild markers whenever filter changes
+  // Init map once on mount
   useEffect(()=>{
-    if(!mapRef.current){
-      mapRef.current=L.map('map-container').setView([49.5,5.0],5);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(mapRef.current);
-    }
-    // Remove old markers
-    markersRef.current.forEach(m=>m.remove());
-    markersRef.current=[];
-
-    const visible=levelFilter==='all'?ZOOS:ZOOS.filter(z=>z.level===parseInt(levelFilter));
-
-    visible.forEach(zoo=>{
-      const lc=LVL[zoo.level];
-      const bgColor=pctColor(zoo.globalPct);
-      const icon=L.divIcon({
-        className:'custom-leaflet-icon',
-        html:`<div style="position:relative;width:48px;height:48px;cursor:pointer">
-          <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-            border:3px solid white;box-shadow:0 6px 16px rgba(0,0,0,.35);font-size:20px;transition:transform .15s"
-            onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'">${zoo.flag}</div>
-          <div style="position:absolute;bottom:0;right:0;width:18px;height:18px;border-radius:50%;
-            display:flex;align-items:center;justify-content:center;font-size:9px;color:white;font-weight:bold;
-            border:2px solid white;background:${bgColor}">${zoo.level}</div>
-        </div>`,
-        iconSize:[48,48],iconAnchor:[24,24],
-      });
-      const marker=L.marker([zoo.lat,zoo.lng],{icon}).addTo(mapRef.current);
-      // Direct click → open modal immediately
-      marker.on('click',()=>openZoo(zoo));
-      // Tooltip on hover (lightweight)
-      marker.bindTooltip(`<strong>${zoo.short}</strong><br/><span style="color:#64748b;font-size:11px">${zoo.flag} ${zoo.city} · ${zoo.globalPct}%</span>`,{
-        direction:'top',offset:[0,-26],className:'leaflet-tooltip-custom',
-      });
-      markersRef.current.push(marker);
-    });
-    return()=>{};
-  },[levelFilter,openZoo]);
-
-  // Cleanup on unmount
-  useEffect(()=>()=>{
-    if(mapRef.current){mapRef.current.remove();mapRef.current=null;}
+    // Wait a tick so the DOM element is fully laid out
+    const timer=setTimeout(()=>{
+      if(mapRef.current) return; // already init
+      const container=document.getElementById('map-container');
+      if(!container) return;
+      const m=L.map(container,{zoomControl:true,scrollWheelZoom:true});
+      m.setView([48.5,6.0],5);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+        attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom:18,
+      }).addTo(m);
+      mapRef.current=m;
+      // Force Leaflet to recalculate container size
+      setTimeout(()=>m.invalidateSize(),100);
+    },50);
+    return()=>{
+      clearTimeout(timer);
+      if(mapRef.current){mapRef.current.remove();mapRef.current=null;}
+    };
   },[]);
+
+  // Update markers when filter changes (after map is ready)
+  useEffect(()=>{
+    const update=()=>{
+      if(!mapRef.current) return;
+      markersRef.current.forEach(m=>m.remove());
+      markersRef.current=[];
+      const visible=levelFilter==='all'?ZOOS:ZOOS.filter(z=>z.level===parseInt(levelFilter));
+      visible.forEach(zoo=>{
+        const bgColor=pctColor(zoo.globalPct);
+        const icon=L.divIcon({
+          className:'custom-leaflet-icon',
+          html:`<div style="position:relative;width:50px;height:50px;cursor:pointer">
+            <div style="width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+              border:3px solid white;box-shadow:0 6px 18px rgba(0,0,0,.32);font-size:22px;background:white">${zoo.flag}</div>
+            <div style="position:absolute;bottom:1px;right:1px;width:18px;height:18px;border-radius:50%;
+              display:flex;align-items:center;justify-content:center;font-size:9px;color:white;font-weight:bold;
+              border:2px solid white;background:${bgColor}">${zoo.level}</div>
+          </div>`,
+          iconSize:[50,50],iconAnchor:[25,25],
+        });
+        const marker=L.marker([zoo.lat,zoo.lng],{icon}).addTo(mapRef.current);
+        marker.on('click',()=>openZooRef.current(zoo));
+        marker.bindTooltip(
+          `<strong style="font-size:12px">${zoo.short}</strong><br/><span style="color:#64748b;font-size:11px">${zoo.flag} ${zoo.city} · <strong style="color:${bgColor}">${zoo.globalPct}%</strong></span>`,
+          {direction:'top',offset:[0,-28],className:'leaflet-tooltip-custom'}
+        );
+        markersRef.current.push(marker);
+      });
+    };
+    // If map not yet ready, retry
+    if(mapRef.current) update();
+    else { const t=setTimeout(update,300); return()=>clearTimeout(t); }
+  },[levelFilter]);
 
   return(
     <div className="fade-in max-w-6xl mx-auto px-4 py-12">
       <div className="text-center mb-8">
-        <h2 className="font-display text-3xl font-bold text-slate-800 mb-3">Carte des 12 Parcs Évalués</h2>
+        <h2 className="font-display text-3xl font-bold text-slate-800 mb-2">Carte des 12 Parcs Évalués</h2>
         <p className="text-slate-500 max-w-2xl mx-auto mb-6 text-sm">
-          <i className="fa-solid fa-hand-pointer mr-1 text-emerald-600"/>
+          <i className="fa-solid fa-hand-pointer mr-1.5 text-emerald-600"/>
           Cliquez directement sur un marqueur pour ouvrir l'évaluation complète du parc.
         </p>
-
-        {/* Level filter buttons */}
-        <div className="flex flex-wrap justify-center gap-3">
+        {/* Filter buttons */}
+        <div className="flex flex-wrap justify-center gap-2.5">
           <button onClick={()=>setLevelFilter('all')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold border transition-all
-              ${levelFilter==='all'?'bg-slate-800 text-white border-slate-800 shadow-lg':'bg-white text-slate-500 border-slate-200 hover:border-slate-400'}`}>
-            <i className="fa-solid fa-globe"/> Tous ({ZOOS.length})
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold border transition-all
+              ${levelFilter==='all'?'bg-slate-800 text-white border-slate-800 shadow':'bg-white text-slate-500 border-slate-200 hover:border-slate-400'}`}>
+            <i className="fa-solid fa-layer-group text-[10px]"/> Tous les parcs ({ZOOS.length})
           </button>
           {[4,3,2,1].map(lv=>{
             const lc=LVL[lv];const cnt=ZOOS.filter(z=>z.level===lv).length;const act=levelFilter===String(lv);
             return(
               <button key={lv} onClick={()=>setLevelFilter(act?'all':String(lv))}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold border transition-all
-                  ${act?`${lc.colorCls} text-white border-transparent shadow-lg scale-105`:`bg-white ${lc.txtCls} border-slate-200 hover:border-slate-300 hover:shadow-sm`}`}>
-                <i className={`fa-solid ${lc.icon}`}/>
-                Niv.{lv} – {lc.title} <span className={act?'text-white/70':'text-slate-400'}>({cnt})</span>
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold border transition-all
+                  ${act?`${lc.colorCls} text-white border-transparent shadow-md`:`bg-white ${lc.txtCls} border-slate-200 hover:shadow-sm`}`}>
+                <i className={`fa-solid ${lc.icon} text-[10px]`}/>
+                Niv.{lv} – {lc.title}
+                <span className={`font-normal ${act?'text-white/70':'text-slate-400'}`}>({cnt})</span>
               </button>
             );
           })}
         </div>
       </div>
 
-      <div className="bg-white p-2 md:p-3 rounded-3xl shadow-xl border border-slate-200">
-        <div id="map-container" className="w-full h-[580px]"/>
+      <div className="bg-white p-2 rounded-3xl shadow-xl border border-slate-200">
+        <div id="map-container" style={{width:'100%',height:'560px',borderRadius:'1rem'}}/>
       </div>
       <p className="text-center text-xs text-slate-400 mt-3">
         <i className="fa-solid fa-circle-info mr-1"/>
-        Un clic sur le marqueur ouvre directement la fiche d'évaluation · Survolez pour voir le nom
+        Clic = ouvre la fiche · Survol = aperçu rapide · Badge coloré = niveau de label
       </p>
     </div>
   );
@@ -986,13 +1002,13 @@ const ProjectPage=()=>(
       <div>
         <h3 className="font-bold text-amber-900 text-base mb-2">Avertissement important – Projet pédagogique étudiant</h3>
         <p className="text-amber-800 text-sm leading-relaxed mb-3">
-          "Label Voix Animale" est un <strong>projet réalisé dans le cadre d'un cours de RSE</strong> par des étudiants. Il ne constitue en aucun cas un label officiel, une certification reconnue, ni une expertise professionnelle en bien-être animal ou en droit des zoos.
+          "Label Voix Animale" est un projet réalisé dans le cadre d'un cours de RSE par des étudiants. Il ne constitue en aucun cas un label officiel, une certification reconnue, ni une expertise professionnelle en bien-être animal ou en droit des zoos.
         </p>
         <ul className="text-amber-800 text-sm space-y-1.5 leading-relaxed">
-          <li className="flex gap-2"><span>•</span><span>Les scores et niveaux attribués résultent d'une grille pédagogique construite à des fins académiques, et non d'un audit terrain ou d'une inspection officielle.</span></li>
-          <li className="flex gap-2"><span>•</span><span>Les informations citées proviennent de sources publiques (sites officiels, rapports annuels, presse) disponibles au moment de la rédaction (Mars 2026). Elles peuvent être incomplètes ou avoir évolué.</span></li>
-          <li className="flex gap-2"><span>•</span><span>Aucun des établissements évalués n'a été contacté ni n'a validé les informations présentées. Les analyses reflètent uniquement une perspective étudiante externe.</span></li>
-          <li className="flex gap-2"><span>•</span><span>Ce site n'a pas vocation à porter atteinte à la réputation des établissements mentionnés. En cas d'erreur factuelle, nous nous engageons à la corriger.</span></li>
+          <li className="flex gap-2"><span className="flex-shrink-0">•</span><span>Les scores et niveaux attribués résultent d'une grille pédagogique construite à des fins académiques, et non d'un audit terrain ou d'une inspection officielle.</span></li>
+          <li className="flex gap-2"><span className="flex-shrink-0">•</span><span>Les informations citées proviennent de sources publiques (sites officiels, rapports annuels, presse) disponibles au moment de la rédaction (Mars 2026). Elles peuvent être incomplètes ou avoir évolué.</span></li>
+          <li className="flex gap-2"><span className="flex-shrink-0">•</span><span>Aucun des établissements évalués n'a été contacté ni n'a validé les informations présentées. Les analyses reflètent uniquement une perspective étudiante externe.</span></li>
+          <li className="flex gap-2"><span className="flex-shrink-0">•</span><span>Ce site n'a pas vocation à porter atteinte à la réputation des établissements mentionnés. En cas d'erreur factuelle, nous nous engageons à la corriger.</span></li>
         </ul>
       </div>
     </div>
@@ -1060,28 +1076,84 @@ const ProjectPage=()=>(
       </div>
     </div>
 
-    {/* ── PANEL ── */}
+    {/* ── ÉQUIPE ── */}
     <div className="bg-white rounded-3xl p-8 md:p-10 shadow-xl border border-slate-100">
-      <h3 className="font-display text-xl text-slate-800 mb-5">Résumé du panel par niveau</h3>
-      <div className="grid sm:grid-cols-2 gap-3">
-        {[4,3,2,1].map(lv=>{
-          const lc=LVL[lv];
-          const zoos=ZOOS.filter(z=>z.level===lv).sort((a,b)=>b.globalPct-a.globalPct);
-          return(
-            <div key={lv} className={`${lc.lightCls} rounded-xl p-4 border-l-4 ${lc.bdCls}`}>
-              <div className={`flex items-center gap-2 font-bold text-sm ${lc.txtCls} mb-2`}>
-                <i className={`fa-solid ${lc.icon}`}/> Niveau {lv} – {lc.title} <span className="text-slate-400 font-normal">({zoos.length})</span>
-              </div>
-              <ul className="space-y-1">
-                {zoos.map(z=>(
-                  <li key={z.id} className="text-xs text-slate-600 flex items-center gap-2">
-                    <span>{z.flag}</span>{z.short}<span className={`ml-auto font-bold ${lc.txtCls}`}>{z.globalPct}%</span>
-                  </li>
-                ))}
-              </ul>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center flex-shrink-0">
+          <i className="fa-solid fa-users"/>
+        </div>
+        <h2 className="font-display text-2xl text-slate-800">L'équipe du projet</h2>
+      </div>
+      <p className="text-slate-500 text-sm mb-6">Ce projet a été réalisé dans le cadre du cours de RSE par les étudiants suivants. Les noms peuvent être complétés ou modifiés selon les souhaits du groupe.</p>
+      <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+        {[
+          {name:"Prénom NOM",role:"Coordinateur·rice du projet"},
+          {name:"Prénom NOM",role:"Grille d'évaluation & critères"},
+          {name:"Prénom NOM",role:"Collecte des données"},
+          {name:"Prénom NOM",role:"Analyse & rédaction"},
+          {name:"Prénom NOM",role:"Design & développement web"},
+          {name:"Prénom NOM",role:"Révision & vérification"},
+        ].map((m,i)=>(
+          <div key={i} className="flex items-center gap-3 bg-slate-50 rounded-xl p-4 border border-slate-100">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+              {m.name.charAt(0)}
             </div>
-          );
-        })}
+            <div>
+              <div className="font-bold text-slate-800 text-sm">{m.name}</div>
+              <div className="text-xs text-slate-500">{m.role}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 text-xs text-slate-400 bg-slate-50 rounded-xl p-3 border border-slate-100">
+        <i className="fa-solid fa-graduation-cap mr-1.5"/>
+        Projet réalisé en Mars 2026 · Encadré dans le cadre du cours de RSE
+      </div>
+    </div>
+
+    {/* ── MENTIONS LÉGALES ── */}
+    <div className="bg-slate-900 rounded-3xl p-8 md:p-10 text-slate-300">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 bg-slate-700 text-slate-300 rounded-xl flex items-center justify-center flex-shrink-0">
+          <i className="fa-solid fa-gavel"/>
+        </div>
+        <h2 className="font-display text-2xl text-white">Mentions légales</h2>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-8 text-sm leading-relaxed">
+        <div className="space-y-5">
+          <div>
+            <h4 className="text-white font-bold text-xs uppercase tracking-widest mb-2 text-emerald-400">Nature du site</h4>
+            <p>Ce site est un <strong className="text-white">projet pédagogique étudiant</strong> sans caractère commercial, réalisé dans le cadre d'un cours académique. Il ne représente aucun organisme officiel, aucune entreprise, ni aucun label certifié.</p>
+          </div>
+          <div>
+            <h4 className="text-white font-bold text-xs uppercase tracking-widest mb-2 text-emerald-400">Responsabilité éditoriale</h4>
+            <p>Les informations présentées sont issues de sources publiques librement accessibles et n'engagent que leurs auteurs à titre personnel et académique. Aucune information ne constitue un conseil juridique, commercial ou professionnel.</p>
+          </div>
+          <div>
+            <h4 className="text-white font-bold text-xs uppercase tracking-widest mb-2 text-emerald-400">Droit à la rectification</h4>
+            <p>Si un établissement mentionné constate une inexactitude factuelle, il peut contacter l'équipe du projet pour demander une correction. Nous nous engageons à traiter toute demande de bonne foi dans les meilleurs délais.</p>
+          </div>
+        </div>
+        <div className="space-y-5">
+          <div>
+            <h4 className="text-white font-bold text-xs uppercase tracking-widest mb-2 text-emerald-400">Données personnelles & cookies</h4>
+            <p>Ce site <strong className="text-white">ne collecte aucune donnée personnelle</strong>, n'utilise aucun cookie de traçage ou d'analyse, et n'intègre aucun système de mesure d'audience. Aucune information sur les visiteurs n'est enregistrée ou transmise à des tiers.</p>
+          </div>
+          <div>
+            <h4 className="text-white font-bold text-xs uppercase tracking-widest mb-2 text-emerald-400">Propriété intellectuelle</h4>
+            <p>Les noms des établissements mentionnés sont la propriété de leurs détenteurs respectifs. Les logos et marques ne sont pas reproduits. Les contenus éditoriaux du site (textes, grille, analyses) sont produits par l'équipe étudiante.</p>
+          </div>
+          <div>
+            <h4 className="text-white font-bold text-xs uppercase tracking-widest mb-2 text-emerald-400">Hébergement & diffusion</h4>
+            <p>Ce site est diffusé à des fins strictement pédagogiques et académiques, dans un cadre scolaire restreint. Il n'a pas vocation à une diffusion commerciale ni à une utilisation en dehors du contexte du cours.</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-8 pt-6 border-t border-slate-700 text-xs text-slate-500 flex flex-wrap gap-4 justify-between items-center">
+        <span><i className="fa-solid fa-paw mr-1.5 text-emerald-500"/>Label Voix Animale · Projet Étudiant RSE © Mars 2026</span>
+        <span className="flex items-center gap-1.5"><i className="fa-solid fa-shield-check text-emerald-500"/>Aucun cookie · Aucune donnée collectée</span>
       </div>
     </div>
 
@@ -1139,6 +1211,11 @@ const GridPage=()=>(
 const App=()=>{
   const [tab,setTab]=useState('home');
   const [zoo,setZoo]=useState(null);
+  useEffect(()=>{
+    const h=e=>setTab('project');
+    document.addEventListener('gotoProject',h);
+    return()=>document.removeEventListener('gotoProject',h);
+  },[]);
   return(
     <div className="min-h-screen flex flex-col">
       <Nav tab={tab} setTab={setTab}/>
@@ -1149,11 +1226,31 @@ const App=()=>{
         {tab==='project' && <ProjectPage/>}
         {tab==='grid'    && <GridPage/>}
       </main>
-      <footer className="bg-slate-900 text-slate-400 py-8 text-center border-t border-slate-800 mt-12">
-        <div className="max-w-4xl mx-auto px-4">
-          <p className="font-display text-emerald-400 text-lg mb-1"><i className="fa-solid fa-paw mr-2"/>Label Voix Animale</p>
-          <p className="text-sm">Projet Étudiant RSE © 2026 · 12 parcs évalués · France & Europe</p>
-          <p className="text-xs text-slate-600 mt-1">Une démarche constructive pour le bien-être animal.</p>
+      <footer className="bg-slate-900 text-slate-400 py-10 border-t border-slate-800 mt-12">
+        <div className="max-w-5xl mx-auto px-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-6">
+            <div>
+              <p className="font-display text-emerald-400 text-lg mb-1"><i className="fa-solid fa-paw mr-2"/>Label Voix Animale</p>
+              <p className="text-sm">Projet Étudiant RSE · 12 parcs évalués · France & Europe · 2026</p>
+            </div>
+            <div className="flex flex-wrap gap-3 text-xs">
+              <span className="flex items-center gap-1.5 bg-slate-800 px-3 py-1.5 rounded-full">
+                <i className="fa-solid fa-shield text-emerald-500"/>Aucun cookie
+              </span>
+              <span className="flex items-center gap-1.5 bg-slate-800 px-3 py-1.5 rounded-full">
+                <i className="fa-solid fa-eye-slash text-emerald-500"/>Aucune donnée collectée
+              </span>
+              <span className="flex items-center gap-1.5 bg-slate-800 px-3 py-1.5 rounded-full">
+                <i className="fa-solid fa-graduation-cap text-emerald-500"/>Usage académique uniquement
+              </span>
+            </div>
+          </div>
+          <div className="border-t border-slate-800 pt-5 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-slate-600">
+            <p>⚠️ Site pédagogique étudiant · Label à vocation académique · Mars 2026</p>
+            <button onClick={()=>{document.dispatchEvent(new CustomEvent('gotoProject'));}} className="text-slate-500 hover:text-slate-300 transition-colors">
+              Mentions légales & Avertissement
+            </button>
+          </div>
         </div>
       </footer>
       <Modal zoo={zoo} onClose={()=>setZoo(null)}/>
