@@ -53,7 +53,7 @@ const {useState,useEffect,useRef,useMemo}=React;
 ═══════════════════════════════════════════════════════════ */
 const CATS=[
   {id:'habitat',   name:'Bien-être & Hébergement',       icon:'fa-tree',          bg:'bg-emerald-100',txt:'text-emerald-700',bar:'#10b981',light:'bg-emerald-50'},
-  {id:'alim',      name:'Alimentation',                  icon:'fa-bowl-food',     bg:'bg-yellow-100', txt:'text-yellow-700', bar:'#eab308',light:'bg-yellow-50'},
+  {id:'alim',      name:'Alimentation',                  icon:'fa-utensils',      bg:'bg-yellow-100', txt:'text-yellow-700', bar:'#eab308',light:'bg-yellow-50'},
   {id:'sante',     name:'Suivi Sanitaire & Vétérinaire', icon:'fa-stethoscope',   bg:'bg-sky-100',    txt:'text-sky-700',    bar:'#0ea5e9',light:'bg-sky-50'},
   {id:'ethique',   name:'Éthique & Transparence',        icon:'fa-scale-balanced',bg:'bg-purple-100', txt:'text-purple-700', bar:'#a855f7',light:'bg-purple-50'},
   {id:'personnel', name:'Personnel & Cadre Légal',       icon:'fa-shield-halved', bg:'bg-orange-100', txt:'text-orange-700', bar:'#f97316',light:'bg-orange-50'},
@@ -578,24 +578,22 @@ const CriteriaExplorer=()=>{
 /* ═══════════════════════════════════════════════════════════
    NAVIGATION
 ═══════════════════════════════════════════════════════════ */
-const Nav=({tab,setTab})=>(
+const Nav=({tab,setTab,openQuiz})=>(
   <div className="sticky top-0 z-40">
-    {/* Disclaimer banner */}
     <div className="bg-amber-500 text-white text-center py-1.5 px-4 text-xs font-semibold">
       ⚠️ Projet pédagogique étudiant RSE · Label à vocation exclusivement académique
     </div>
-    
     <div className="bg-white shadow-sm border-b border-slate-200">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex items-center justify-between">
           <span className="font-display text-emerald-700 font-bold text-lg py-3 hidden sm:flex items-center gap-2">
-           <i className="fa-solid fa-paw text-emerald-500"/>Voix Animale
+            <i className="fa-solid fa-paw text-emerald-500"/>Voix Animale
           </span>
-          <div className="flex overflow-x-auto custom-scroll w-full sm:w-auto">
+          <div className="flex overflow-x-auto custom-scroll w-full sm:w-auto items-center">
             {[
               {id:'home',    icon:'fa-house',           label:'Accueil'},
               {id:'map',     icon:'fa-map-location-dot',label:'Carte'},
-              {id:'ranking', icon:'fa-ranking-star',    label:'Classement'},
+              {id:'ranking', icon:'fa-trophy',          label:'Classement'},
               {id:'project', icon:'fa-bullseye',        label:'Projet'},
               {id:'grid',    icon:'fa-clipboard-check', label:'Grille'},
             ].map(t=>(
@@ -605,6 +603,11 @@ const Nav=({tab,setTab})=>(
                 <i className={`fa-solid ${t.icon}`}/><span className="hidden md:inline">{t.label}</span>
               </button>
             ))}
+            {/* Quiz button */}
+            <button onClick={openQuiz}
+              className="ml-2 flex items-center gap-1.5 bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow hover:shadow-md hover:-translate-y-0.5 transition-all whitespace-nowrap">
+              🎮 <span className="hidden sm:inline">Jeux</span>
+            </button>
           </div>
         </div>
       </div>
@@ -615,7 +618,7 @@ const Nav=({tab,setTab})=>(
 /* ═══════════════════════════════════════════════════════════
    HOME PAGE
 ═══════════════════════════════════════════════════════════ */
-const HomePage=({setTab,openZoo})=>{
+const HomePage=({setTab,openZoo,openQuiz})=>{
   const top4=[...ZOOS].sort((a,b)=>b.globalPct-a.globalPct).slice(0,4);
   return(
     <div>
@@ -651,10 +654,10 @@ const HomePage=({setTab,openZoo})=>{
                 <i className="fa-solid fa-map mr-2"/>Explorer la Carte
               </button>
               <button onClick={()=>setTab('ranking')} className="bg-white/10 hover:bg-white/20 text-white px-7 py-3.5 rounded-full font-bold border border-white/25 transition-all hover:-translate-y-1 text-sm">
-                <i className="fa-solid fa-ranking-star mr-2"/>Classement
+                <i className="fa-solid fa-trophy mr-2"/>Classement
               </button>
-              <button onClick={()=>setTab('project')} className="bg-white/10 hover:bg-white/20 text-white px-7 py-3.5 rounded-full font-bold border border-white/25 transition-all hover:-translate-y-1 text-sm">
-                <i className="fa-solid fa-circle-info mr-2"/>Le Projet
+              <button onClick={openQuiz} className="bg-gradient-to-r from-violet-600 to-fuchsia-500 hover:from-violet-500 hover:to-fuchsia-400 text-white px-7 py-3.5 rounded-full font-bold shadow-lg shadow-violet-500/30 transition-all hover:-translate-y-1 text-sm">
+                🎮 Jouer aux jeux
               </button>
             </div>
           </div>
@@ -697,10 +700,10 @@ const HomePage=({setTab,openZoo})=>{
 
       <div className="max-w-6xl mx-auto px-4 py-20">
         {/* Feature cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-20">
+        <div className="grid md:grid-cols-3 gap-6 mb-10">
           {[
             {id:'map',     icon:'fa-map-location-dot',col:'emerald',title:'La Carte Interactive',      desc:'12 parcs sur une carte Europe avec leur niveau RSE et un accès direct à chaque analyse.'},
-            {id:'ranking', icon:'fa-ranking-star',    col:'blue',   title:'Le Classement Complet',    desc:'Comparez tous les parcs avec filtres par pays et niveau. Chaque ligne ouvre le détail complet.'},
+            {id:'ranking', icon:'fa-trophy',          col:'blue',   title:'Le Classement Complet',    desc:'Comparez tous les parcs avec filtres par pays et niveau. Chaque ligne ouvre le détail complet.'},
             {id:'grid',    icon:'fa-clipboard-list',  col:'amber',  title:'Les 69 Critères détaillés',desc:'Explorez chaque critère par niveau, comprenez la logique de notation et les seuils bloquants.'},
           ].map((card,i)=>(
             <div key={card.id} onClick={()=>setTab(card.id)}
@@ -715,6 +718,26 @@ const HomePage=({setTab,openZoo})=>{
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Quiz teaser banner */}
+        <div onClick={openQuiz}
+          className="cursor-pointer mb-20 rounded-3xl overflow-hidden relative bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-500 p-8 flex flex-col md:flex-row items-center gap-6 hover:shadow-2xl hover:scale-[1.01] transition-all fade-up s4">
+          <div className="text-7xl flex-shrink-0">🎮</div>
+          <div className="flex-1 text-white">
+            <div className="inline-block text-xs font-bold bg-white/20 border border-white/30 rounded-full px-3 py-1 mb-3">
+              4 jeux · Quiz · Indices · Vrai/Faux · Classement
+            </div>
+            <h3 className="font-display text-2xl md:text-3xl font-bold mb-2">Game Center — Testez-vous !</h3>
+            <p className="text-violet-200 text-sm leading-relaxed max-w-lg">
+              4 jeux pour tester vos connaissances : QCM culture zoo, indices progressifs, speed Vrai/Faux et puzzle classement. Enregistrez votre score et montez dans le classement !
+            </p>
+          </div>
+          <div className="flex-shrink-0">
+            <span className="flex items-center gap-2 bg-white text-violet-700 font-bold text-sm px-6 py-3 rounded-2xl shadow-lg">
+              Jouer maintenant <i className="fa-solid fa-arrow-right"/>
+            </span>
+          </div>
         </div>
 
         {/* Top 4 */}
@@ -1084,7 +1107,7 @@ const ProjectPage=()=>(
         </div>
         <h2 className="font-display text-2xl text-slate-800">L'équipe du projet</h2>
       </div>
-      <p className="text-slate-500 text-sm mb-6">Ce projet a été réalisé dans le cadre du cours de RSE par les étudiants suivants.</p>
+      <p className="text-slate-500 text-sm mb-6">Ce projet a été réalisé dans le cadre du cours Projet RSE par les étudiants suivants.</p>
       <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
         {[
           {name:"Kévin CELORO",role:"Développeur du site et membre du groupe"},
@@ -1106,7 +1129,7 @@ const ProjectPage=()=>(
       </div>
       <div className="mt-4 text-xs text-slate-400 bg-slate-50 rounded-xl p-3 border border-slate-100">
         <i className="fa-solid fa-graduation-cap mr-1.5"/>
-        Projet réalisé en Mars 2026 · Encadré dans le cadre du cours de RSE
+        Projet réalisé en Mars 2026 · Encadré dans le cadre du cours Projet RSE
       </div>
     </div>
 
@@ -1145,14 +1168,14 @@ const ProjectPage=()=>(
           </div>
           <div>
             <h4 className="text-white font-bold text-xs uppercase tracking-widest mb-2 text-emerald-400">Hébergement & diffusion</h4>
-            <p>Ce site est diffusé à des fins strictement pédagogiques et académiques, dans un cadre scolaire restreint. Il n'a pas vocation à une diffusion commerciale.</p>
+            <p>Ce site est diffusé à des fins strictement pédagogiques et académiques, dans un cadre scolaire restreint. Il n'a pas vocation à une diffusion commerciale ni à une utilisation en dehors du contexte du cours.</p>
           </div>
         </div>
       </div>
 
       <div className="mt-8 pt-6 border-t border-slate-700 text-xs text-slate-500 flex flex-wrap gap-4 justify-between items-center">
         <span><i className="fa-solid fa-paw mr-1.5 text-emerald-500"/>Label Voix Animale · Projet Étudiant RSE © Mars 2026</span>
-        <span className="flex items-center gap-1.5"><i className="fa-solid fa-shield text-emerald-500"/>Aucun cookie · Aucune donnée collectée</span>
+        <span className="flex items-center gap-1.5"><i className="fa-solid fa-shield-check text-emerald-500"/>Aucun cookie · Aucune donnée collectée</span>
       </div>
     </div>
 
@@ -1205,21 +1228,683 @@ const GridPage=()=>(
 );
 
 /* ═══════════════════════════════════════════════════════════
+   GAME CENTER — 4 JEUX + CLASSEMENT SYNCHRONISÉ
+   ⚙️ Pour activer le classement en ligne (gratuit) :
+   1. Créez un compte sur jsonbin.io
+   2. Créez un Bin avec contenu initial : {"entries":[]}
+   3. Copiez votre X-Master-Key et Bin ID ci-dessous
+═══════════════════════════════════════════════════════════ */
+const JSONBIN_KEY='$2a$10$N6wm5exDFvr5RoVSYdek7.6hnxQfWqQq9C/EUN7ma4U.fMyIICqhu';  // ex: $2b$10$xxxxxx...
+const JSONBIN_ID='69c59b86c3097a1dd5639a56';   // ex: 64abc123def...
+
+/* ── Leaderboard persistence ── */
+const LB_LS='voixAnimale_lb_v2';
+const lbRead=()=>{try{return JSON.parse(localStorage.getItem(LB_LS)||'[]');}catch{return[];}};
+const lbWrite=e=>localStorage.setItem(LB_LS,JSON.stringify(e));
+
+const useLeaderboard=()=>{
+  const [entries,setEntries]=useState(lbRead);
+  const [online,setOnline]=useState(false);
+  const [loading,setLoading]=useState(false);
+
+  const sync=async()=>{
+    if(!JSONBIN_KEY||!JSONBIN_ID) return;
+    setLoading(true);
+    try{
+      const r=await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}/latest`,
+        {headers:{'X-Master-Key':JSONBIN_KEY,'X-Bin-Meta':false}});
+      const d=await r.json();
+      const remote=Array.isArray(d?.entries)?d.entries:[];
+      setEntries(remote); lbWrite(remote); setOnline(true);
+    }catch{setOnline(false);}
+    setLoading(false);
+  };
+
+  const submit=async(entry)=>{
+    const merged=[entry,...entries]
+      .sort((a,b)=>b.pct-a.pct)
+      .filter((e,i,arr)=>arr.findIndex(x=>x.name===e.name&&x.game===e.game)===i||i<50)
+      .slice(0,100);
+    setEntries(merged); lbWrite(merged);
+    if(!JSONBIN_KEY||!JSONBIN_ID) return;
+    try{
+      await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}`,{
+        method:'PUT',
+        headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY},
+        body:JSON.stringify({entries:merged}),
+      });
+      setOnline(true);
+    }catch{}
+  };
+
+  useEffect(()=>{sync();},[]);
+  return{entries,submit,online,loading,sync};
+};
+
+/* ═══════════════════════════════════════════════════════════
+   GAME DATA
+═══════════════════════════════════════════════════════════ */
+const QUIZ_Q=[
+  {q:"Quel zoo français est le plus fréquenté, avec plus de 2 millions de visiteurs par an ?",opts:["Zoo de La Palmyre","ZooParc Beauval","Parc Zoologique de Paris","Zoo de Mulhouse"],a:1,expl:"Beauval est le zoo le plus visité de France, notamment grâce aux pandas géants.",e:"🐼"},
+  {q:"Quel zoo a été exclu de l'EAZA pour un parc de tigres controversé, avant d'être réintégré en 2022 ?",opts:["Réserve de Sigean","Zoo de Mulhouse","Zoo d'Amnéville","Artis Amsterdam"],a:2,expl:"Le Zoo d'Amnéville a été exclu à cause de son 'Tiger World', puis réintégré à l'EAZA en octobre 2022.",e:"🐯"},
+  {q:"Quel zoo européen est installé dans des carrières de faluns — un site géologique unique ?",opts:["Bioparc de Doué-la-Fontaine","Zoo de Berlin","Parc de Sainte-Croix","Zoo de Mulhouse"],a:0,expl:"Le Bioparc de Doué-la-Fontaine est creusé dans des faluns (roche volcanique), architecture unique en Europe.",e:"🦏"},
+  {q:"Quel zoo est géré par le Muséum National d'Histoire Naturelle (MNHN) ?",opts:["Zoo de La Palmyre","ZooParc Beauval","Parc Zoologique de Paris","Zoo de Mulhouse"],a:2,expl:"Le Parc Zoologique de Paris (Vincennes) est le seul zoo français géré par une institution scientifique publique.",e:"🦒"},
+  {q:"Quel zoo couvre 300 hectares en format 'safari libre' mais n'est pas membre de l'EAZA ?",opts:["Parc de Sainte-Croix","Réserve Africaine de Sigean","Bioparc de Doué","Zoo d'Amnéville"],a:1,expl:"La Réserve Africaine de Sigean s'étend sur 300 ha mais reste hors EAZA.",e:"🦁"},
+  {q:"Quel zoo néerlandais est co-fondateur de l'EAZA et a des bâtiments classés Monuments Nationaux ?",opts:["Artis Amsterdam","Zoo de Berlin","Zoo de Zurich","Pairi Daiza"],a:0,expl:"Artis (fondé en 1838) co-fondateur de l'EAZA, avec un patrimoine architectural protégé au cœur d'Amsterdam.",e:"🐘"},
+  {q:"Quel zoo belge a reçu le plus de prix européens ces 10 dernières années ?",opts:["Zoo de Berlin","Pairi Daiza","Zoo de Zurich","Artis Amsterdam"],a:1,expl:"Pairi Daiza (Brugelette) est régulièrement primé zoo le plus beau d'Europe.",e:"🦜"},
+  {q:"Quel zoo est régulièrement cité par les experts comme référence mondiale du bien-être animal ?",opts:["Zoo de Berlin","Pairi Daiza","Zoo de Zurich","Zoo de La Palmyre"],a:2,expl:"Le Zoo de Zurich est une référence mondiale : hall Masoala 1 ha, Kaeng Krachan 11 000 m², aucun spectacle.",e:"🌍"},
+  {q:"Quel zoo français possède la fondation de conservation la plus active (4 continents) ?",opts:["ZooParc Beauval","Zoo de La Palmyre","Bioparc de Doué","Parc Zoologique de Paris"],a:1,expl:"La Fondation Palmyre Conservation soutient des programmes de protection in-situ sur 4 continents.",e:"🦧"},
+  {q:"Quel zoo a obtenu le label ⭐ Excellence avec le score le plus élevé (96%) ?",opts:["Zoo de Berlin","Pairi Daiza","Zoo de La Palmyre","Zoo de Zurich"],a:3,expl:"Le Zoo de Zurich obtient 96% dans notre grille et valide tous les seuils des 4 niveaux.",e:"⭐"},
+];
+
+const INDICES_DATA=[
+  {zoo:ZOOS.find(z=>z.id===1),clues:["Je suis situé dans la plus grande ville de Suisse.","Mon enclos pour éléphants, Kaeng Krachan, couvre 11 000 m².","Je possède une forêt tropicale intérieure de 1 hectare (le Masoala).","Aucun spectacle ni dressage n'est proposé dans mon enceinte.","Je suis régulièrement classé meilleur zoo du monde par les experts."]},
+  {zoo:ZOOS.find(z=>z.id===2),clues:["Je suis le plus ancien zoo d'Allemagne, fondé en 1844.","J'abrite plus de 1 200 espèces sur 35 hectares.","Mon aquarium historique est intégré à mon site.","Je suis situé dans la capitale réunifiée d'un grand pays européen.","Je publie chaque année des rapports de transparence très détaillés."]},
+  {zoo:ZOOS.find(z=>z.id===3),clues:["Je suis situé dans la province du Hainaut.","Mes enclos sont organisés en zones thématiques immersives (Asie, Islande, Océanie…).","Ma fondation s'engage pour le panda géant et le gorille de montagne.","J'attire plus de 2 millions de visiteurs par an en Belgique.","J'ai été élu meilleur zoo européen plusieurs années consécutives."]},
+  {zoo:ZOOS.find(z=>z.id===6),clues:["Je suis le zoo le plus fréquenté de France.","Je suis célèbre pour mes pandas géants prêtés par la Chine.","Je suis situé dans le Loir-et-Cher, en région Centre-Val de Loire.","Je fais l'objet d'une controverse liée à des animaux à robe blanche.","Ma fondation finance plus de 120 programmes de conservation mondiaux."]},
+  {zoo:ZOOS.find(z=>z.id===5),clues:["Je suis creusé dans d'anciennes carrières de roches volcaniques.","Je me situe dans une commune du Maine-et-Loire.","Mes 'Projets Nature' financent 30+ programmes in-situ.","Mon architecture souterraine est absolument unique en Europe.","J'ai obtenu 94% dans la grille Voix Animale, mais pas le niveau 4."]},
+  {zoo:ZOOS.find(z=>z.id===11),clues:["Je suis le seul vrai safari de grande envergure en France.","Je couvre 300 hectares dans un département méditerranéen.","Je ne suis pas membre de l'EAZA.","Les visiteurs parcourent mon domaine en voiture.","J'ai obtenu le niveau 1 dans la grille avec 57%."]},
+  {zoo:ZOOS.find(z=>z.id===12),clues:["J'ai été exclu d'une grande association européenne pour un parc de tigres controversé.","J'ai été réintégré à l'EAZA en octobre 2022.","Je maintiens encore des spectacles de lions de mer.","Je suis situé dans un parc de loisirs plus large en Moselle.","Je suis le zoo avec le score le plus bas de notre panel (49%)."]},
+  {zoo:ZOOS.find(z=>z.id===9),clues:["Je m'étends sur 130 hectares dédiés à la faune européenne en semi-liberté.","Je suis situé dans le département de la Moselle, en Lorraine.","Mon Fonds Biodiversité soutient les EEP bisons et chevaux de Przewalski.","Mon format de 'parc naturel' est radicalement différent d'un zoo classique.","Deux seuils N3 non validés m'empêchent d'atteindre l'Approche Éthique."]},
+];
+
+const VF_DATA=[
+  {txt:"Le Zoo de Zurich est situé en Allemagne.",v:false,expl:"Zurich est en Suisse ! C'est le zoo suisse, pas allemand."},
+  {txt:"Beauval accueille des pandas géants prêtés par la Chine.",v:true,expl:"Huan Huan et ses jumeaux Yuan Meng sont les pandas emblématiques de Beauval."},
+  {txt:"Pairi Daiza est situé en France.",v:false,expl:"Pairi Daiza est à Brugelette, en Belgique (province du Hainaut)."},
+  {txt:"Artis Amsterdam a été fondé en 1838.",v:true,expl:"Artis est l'un des plus vieux zoos d'Europe, fondé en 1838 à Amsterdam."},
+  {txt:"Le Zoo d'Amnéville a été exclu de l'EAZA à cause d'un parc de lions.",v:false,expl:"C'était un parc de TIGRES — le 'Tiger World' — qui a provoqué l'exclusion."},
+  {txt:"La Réserve de Sigean s'étend sur 300 hectares.",v:true,expl:"300 ha de safari libre — le plus grand de France."},
+  {txt:"Le Parc Zoologique de Paris est géré par la Ville de Paris.",v:false,expl:"Il est géré par le MNHN (Muséum National d'Histoire Naturelle)."},
+  {txt:"Le Zoo de Zurich a obtenu 96% dans la grille Voix Animale.",v:true,expl:"96% et 4 niveaux validés — le meilleur score de notre panel."},
+  {txt:"La Palmyre finance des programmes de conservation sur 4 continents.",v:true,expl:"La Fondation Palmyre Conservation est active sur 4 continents avec 20+ programmes."},
+  {txt:"Sigean est membre de l'EAZA.",v:false,expl:"La Réserve Africaine de Sigean n'est PAS membre de l'EAZA."},
+  {txt:"Sainte-Croix s'étend sur 500 hectares.",v:false,expl:"Sainte-Croix c'est 130 hectares — pas 500 !"},
+  {txt:"Le Zoo d'Amnéville maintient encore des spectacles de lions de mer.",v:true,expl:"Ces spectacles sont l'un des seuils N2 non validés bloquant sa progression."},
+  {txt:"Artis Amsterdam est co-fondateur de l'EAZA.",v:true,expl:"Artis est l'un des zoos fondateurs de l'EAZA avec plusieurs autres grands zoos européens."},
+  {txt:"Le Bioparc de Doué-la-Fontaine est creusé dans d'anciennes carrières.",v:true,expl:"Les faluns (roches volcaniques) créent une architecture unique, impossible à reproduire."},
+  {txt:"Zoo de Berlin accueille plus de 1 200 espèces animales.",v:true,expl:"Avec 1 200+ espèces, Berlin est l'un des zoos les plus diversifiés au monde."},
+];
+
+/* ═══════════════════════════════════════════════════════════
+   HELPERS PARTAGÉS
+═══════════════════════════════════════════════════════════ */
+const shuffle=arr=>[...arr].sort(()=>Math.random()-.5);
+const GameBadge=({pct})=>{
+  const b=pct>=90?{l:'🏆 Expert',g:'from-amber-400 to-yellow-300',t:'text-amber-900'}
+    :pct>=70?{l:'🌿 Connaisseur',g:'from-emerald-500 to-teal-400',t:'text-emerald-900'}
+    :pct>=50?{l:'🔵 Éco-curieux',g:'from-blue-500 to-cyan-400',t:'text-blue-900'}
+    :{l:'🌱 Apprenti',g:'from-slate-400 to-slate-500',t:'text-slate-900'};
+  return <span className={`inline-block px-4 py-1.5 rounded-full bg-gradient-to-r ${b.g} text-sm font-bold ${b.t}`}>{b.l}</span>;
+};
+
+const ScoreEntry=({score,maxScore,game,onSubmit,onSkip})=>{
+  const [name,setName]=useState('');
+  const pct=Math.round((score/maxScore)*100);
+  return(
+    <div className="p-6 text-center space-y-4">
+      <GameBadge pct={pct}/>
+      <div className="font-display text-4xl font-bold text-slate-800">{score}<span className="text-xl text-slate-400">/{maxScore}</span></div>
+      <p className="text-slate-500 text-sm">{pct}% · {game}</p>
+      <div className="h-2 bg-slate-100 rounded-full"><div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-400 transition-all duration-700" style={{width:`${pct}%`}}/></div>
+      <div className="pt-2">
+        <p className="text-sm text-slate-600 mb-3 font-semibold">Entrez votre prénom pour le classement :</p>
+        <input className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-violet-400 focus:outline-none text-sm mb-3"
+          placeholder="Votre prénom…" maxLength={20} value={name} onChange={e=>setName(e.target.value)}
+          onKeyDown={e=>e.key==='Enter'&&name.trim()&&onSubmit(name.trim(),pct)}/>
+        <div className="flex gap-2">
+          <button onClick={onSkip} className="flex-1 py-2.5 rounded-xl border-2 border-slate-200 text-slate-500 text-sm font-semibold hover:bg-slate-50">Passer</button>
+          <button onClick={()=>name.trim()&&onSubmit(name.trim(),pct)}
+            disabled={!name.trim()}
+            className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white text-sm font-bold disabled:opacity-40 hover:opacity-90">
+            Enregistrer 🏆
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════
+   JEU 1 — QUIZ CULTURE ZOO (10 QCM)
+═══════════════════════════════════════════════════════════ */
+const GameQuiz=({onFinish})=>{
+  const [qi,setQi]=useState(0);
+  const [score,setScore]=useState(0);
+  const [chosen,setChosen]=useState(null);
+  const [answered,setAnswered]=useState(false);
+  const [hist,setHist]=useState([]);
+  const q=QUIZ_Q[qi];
+
+  const pick=(i)=>{
+    if(answered)return;
+    setChosen(i);setAnswered(true);
+    const ok=i===q.a;
+    if(ok)setScore(s=>s+3);
+    setHist(h=>[...h,{ok,pts:ok?3:0}]);
+  };
+  const next=()=>{
+    if(qi+1>=QUIZ_Q.length){onFinish(score+(chosen===q.a?0:0),30,hist);}
+    else{setQi(q=>q+1);setChosen(null);setAnswered(false);}
+  };
+
+  return(
+    <div className="p-5">
+      <div className="flex justify-between items-center mb-3">
+        <span className="text-xs font-bold text-slate-400">Q {qi+1}/{QUIZ_Q.length}</span>
+        <span className="text-xs font-bold text-violet-600">{score} pts</span>
+      </div>
+      <div className="h-1.5 bg-slate-100 rounded-full mb-5">
+        <div className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-400 rounded-full transition-all" style={{width:`${(qi/QUIZ_Q.length)*100}%`}}/>
+      </div>
+      <div className="text-center mb-5">
+        <span className="text-4xl block mb-3">{q.e}</span>
+        <p className="font-display text-base text-slate-800 leading-snug">{q.q}</p>
+      </div>
+      <div className="space-y-2 mb-4">
+        {q.opts.map((opt,i)=>{
+          let cls='bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100';
+          if(answered){
+            if(i===q.a) cls='bg-emerald-50 border-emerald-400 text-emerald-800 font-bold';
+            else if(i===chosen) cls='bg-red-50 border-red-300 text-red-700 line-through';
+            else cls='bg-slate-50 border-slate-100 text-slate-400';
+          }
+          return(
+            <button key={i} onClick={()=>pick(i)}
+              className={`w-full text-left px-4 py-2.5 rounded-xl border-2 text-sm transition-all flex items-center gap-3 ${answered?'cursor-default':'cursor-pointer'} ${cls}`}>
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${answered&&i===q.a?'bg-emerald-500 text-white':answered&&i===chosen?'bg-red-400 text-white':'bg-white border border-slate-300'}`}>
+                {answered&&i===q.a?'✓':answered&&i===chosen?'✗':['A','B','C','D'][i]}
+              </span>{opt}
+            </button>
+          );
+        })}
+      </div>
+      {answered&&<div className={`rounded-xl p-3 mb-3 text-xs leading-relaxed ${chosen===q.a?'bg-emerald-50 border border-emerald-200 text-emerald-800':'bg-red-50 border border-red-200 text-red-800'}`}>
+        <strong>{chosen===q.a?'✓ Exact !':'✗ Raté…'}</strong> {q.expl}
+      </div>}
+      {answered&&<button onClick={next} className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white py-3 rounded-2xl font-bold text-sm hover:opacity-90">
+        {qi+1<QUIZ_Q.length?'Suivant →':'Résultats 🏆'}
+      </button>}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════
+   JEU 2 — QUI SUIS-JE ? (indices progressifs)
+═══════════════════════════════════════════════════════════ */
+const GameIndices=({onFinish})=>{
+  const questions=useMemo(()=>shuffle(INDICES_DATA).slice(0,6),[]);
+  const [qi,setQi]=useState(0);
+  const [revealed,setRevealed]=useState(1);
+  const [guessed,setGuessed]=useState(false);
+  const [chosen,setChosen]=useState(null);
+  const [score,setScore]=useState(0);
+  const [pts,setPts]=useState(null);
+  const q=questions[qi];
+  const maxPts=6*5;
+
+  const guess=(zoo)=>{
+    if(guessed)return;
+    const ok=zoo.id===q.zoo.id;
+    const earned=ok?Math.max(6-revealed,1):0;
+    setChosen(zoo);setGuessed(true);setPts(earned);
+    if(ok)setScore(s=>s+earned);
+  };
+  const next=()=>{
+    if(qi+1>=questions.length){onFinish(score+(pts||0),maxPts,[]);}
+    else{setQi(q=>q+1);setRevealed(1);setGuessed(false);setChosen(null);setPts(null);}
+  };
+
+  const opts=useMemo(()=>shuffle(ZOOS),[qi]);
+
+  return(
+    <div className="p-5">
+      <div className="flex justify-between items-center mb-3">
+        <span className="text-xs font-bold text-slate-400">Zoo {qi+1}/{questions.length}</span>
+        <span className="text-xs font-bold text-violet-600">{score} pts</span>
+      </div>
+      <div className="h-1.5 bg-slate-100 rounded-full mb-4">
+        <div className="h-full bg-gradient-to-r from-orange-400 to-amber-400 rounded-full transition-all" style={{width:`${(qi/questions.length)*100}%`}}/>
+      </div>
+
+      <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 mb-4">
+        <div className="text-xs font-bold text-amber-600 uppercase mb-2">🔍 Qui suis-je ?</div>
+        <div className="space-y-2">
+          {q.clues.slice(0,revealed).map((c,i)=>(
+            <div key={i} className="flex items-start gap-2 text-sm text-amber-900">
+              <span className="w-5 h-5 rounded-full bg-amber-400 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">{i+1}</span>
+              <span>{c}</span>
+            </div>
+          ))}
+        </div>
+        {!guessed&&revealed<q.clues.length&&(
+          <button onClick={()=>setRevealed(r=>r+1)}
+            className="mt-3 text-xs font-bold text-amber-600 border border-amber-300 px-3 py-1.5 rounded-full hover:bg-amber-100 transition-colors">
+            <i className="fa-solid fa-eye mr-1"/>Indice suivant (−1 pt)
+          </button>
+        )}
+        {!guessed&&<div className="mt-1 text-right text-xs text-amber-500">Valeur actuelle : <strong>{Math.max(6-revealed,1)} pts</strong></div>}
+      </div>
+
+      {!guessed&&(
+        <div>
+          <p className="text-xs font-bold text-slate-500 mb-2">Quel zoo est-ce ?</p>
+          <div className="grid grid-cols-2 gap-2 max-h-52 overflow-y-auto custom-scroll">
+            {opts.map(z=>(
+              <button key={z.id} onClick={()=>guess(z)}
+                className="text-left px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-violet-50 hover:border-violet-300 transition-all flex items-center gap-1.5">
+                <span>{z.flag}</span><span className="truncate">{z.short}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {guessed&&(
+        <div>
+          <div className={`rounded-xl p-4 mb-3 text-sm text-center ${chosen.id===q.zoo.id?'bg-emerald-50 border border-emerald-200 text-emerald-800':'bg-red-50 border border-red-200 text-red-700'}`}>
+            {chosen.id===q.zoo.id
+              ?<><strong>✓ Bravo !</strong> C'est bien {q.zoo.short} — <strong>+{pts} pt{pts>1?'s':''}</strong></>
+              :<><strong>✗ Raté !</strong> C'était <strong>{q.zoo.short}</strong> {q.zoo.flag} — +0 pt</>
+            }
+          </div>
+          <button onClick={next} className="w-full bg-gradient-to-r from-orange-500 to-amber-400 text-white py-3 rounded-2xl font-bold text-sm hover:opacity-90">
+            {qi+1<questions.length?'Zoo suivant →':'Résultats 🏆'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════
+   JEU 3 — SPEED VRAI/FAUX (chrono 45 sec)
+═══════════════════════════════════════════════════════════ */
+const GameVraiFaux=({onFinish})=>{
+  const questions=useMemo(()=>shuffle(VF_DATA),[]);
+  const [qi,setQi]=useState(0);
+  const [score,setScore]=useState(0);
+  const [time,setTime]=useState(45);
+  const [last,setLast]=useState(null); // {ok, txt, v}
+  const [done,setDone]=useState(false);
+  const [hist,setHist]=useState([]);
+  const maxScore=questions.length*2;
+
+  useEffect(()=>{
+    if(done)return;
+    const t=setInterval(()=>setTime(s=>{if(s<=1){clearInterval(t);setDone(true);return 0;}return s-1;}),1000);
+    return()=>clearInterval(t);
+  },[done]);
+
+  const answer=(v)=>{
+    if(done||qi>=questions.length)return;
+    const q=questions[qi];
+    const ok=v===q.v;
+    const pts=ok?2:-1;
+    setScore(s=>Math.max(0,s+pts));
+    setLast({ok,txt:q.txt,expl:q.expl,pts});
+    setHist(h=>[...h,{ok}]);
+    const nqi=qi+1;
+    setQi(nqi);
+    if(nqi>=questions.length)setDone(true);
+    else setTimeout(()=>setLast(null),600);
+  };
+
+  const finalScore=Math.min(score,maxScore);
+
+  if(done){
+    return(
+      <div className="p-5 text-center">
+        <div className="text-4xl mb-2">⚡</div>
+        <div className="font-display text-4xl font-bold text-slate-800 mb-1">{finalScore}<span className="text-xl text-slate-400">/{maxScore}</span></div>
+        <p className="text-slate-500 text-sm mb-4">{hist.filter(h=>h.ok).length}/{Math.min(qi,questions.length)} bonnes réponses</p>
+        <div className="flex justify-center gap-1.5 mb-5 flex-wrap">
+          {hist.map((h,i)=>(
+            <span key={i} className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white ${h.ok?'bg-emerald-500':'bg-red-400'}`}>
+              {h.ok?'✓':'✗'}
+            </span>
+          ))}
+        </div>
+        <button onClick={()=>onFinish(finalScore,maxScore,hist)} className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white py-3 rounded-2xl font-bold text-sm hover:opacity-90">
+          Résultats 🏆
+        </button>
+      </div>
+    );
+  }
+
+  const q=questions[qi]||questions[questions.length-1];
+  const urgency=time<=10?'text-red-500 animate-pulse':time<=20?'text-orange-500':'text-slate-600';
+
+  return(
+    <div className="p-5">
+      <div className="flex justify-between items-center mb-3">
+        <span className={`text-xl font-display font-bold ${urgency}`}>⏱ {time}s</span>
+        <span className="text-xs font-bold text-cyan-600">{score} pts</span>
+      </div>
+      <div className="h-2 bg-slate-100 rounded-full mb-5 overflow-hidden">
+        <div className={`h-full rounded-full transition-all duration-1000 ${time>20?'bg-cyan-400':time>10?'bg-orange-400':'bg-red-500'}`}
+          style={{width:`${(time/45)*100}%`}}/>
+      </div>
+
+      {last?(
+        <div className={`rounded-2xl p-5 text-center mb-4 border-2 ${last.ok?'bg-emerald-50 border-emerald-300':'bg-red-50 border-red-300'}`}>
+          <div className="text-3xl mb-1">{last.ok?'✅':'❌'}</div>
+          <div className={`font-bold text-sm ${last.ok?'text-emerald-700':'text-red-700'}`}>{last.ok?`+2 pts`:`-1 pt`}</div>
+          <p className="text-xs text-slate-500 mt-1">{last.expl}</p>
+        </div>
+      ):(
+        <div>
+          <div className="text-center mb-6">
+            <div className="text-xs font-bold text-slate-400 uppercase mb-3">Question {qi+1}/{questions.length}</div>
+            <p className="font-display text-lg text-slate-800 leading-snug px-2">{q.txt}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <button onClick={()=>answer(true)}
+              className="bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white py-6 rounded-2xl font-display text-2xl font-bold shadow-lg active:scale-95 transition-all">
+              ✅ VRAI
+            </button>
+            <button onClick={()=>answer(false)}
+              className="bg-gradient-to-b from-red-500 to-red-600 hover:from-red-400 hover:to-red-500 text-white py-6 rounded-2xl font-display text-2xl font-bold shadow-lg active:scale-95 transition-all">
+              ❌ FAUX
+            </button>
+          </div>
+          <p className="text-center text-xs text-slate-400 mt-3">+2 pts si correct · −1 si raté</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════
+   JEU 4 — PUZZLE CLASSEMENT (remettre en ordre)
+═══════════════════════════════════════════════════════════ */
+const GameOrdre=({onFinish})=>{
+  const ROUNDS=3;
+  const N=5;
+  const allSets=useMemo(()=>{
+    const s=shuffle(ZOOS);
+    return[s.slice(0,N),s.slice(N,N*2),s.slice(N*2,N*3)];
+  },[]);
+  const [round,setRound]=useState(0);
+  const [score,setScore]=useState(0);
+  const [order,setOrder]=useState(()=>shuffle(allSets[0]));
+  const [submitted,setSubmitted]=useState(false);
+  const [pts,setPts]=useState(0);
+  const maxScore=ROUNDS*N*2;
+
+  const real=useMemo(()=>[...allSets[round]].sort((a,b)=>b.globalPct-a.globalPct),[round]);
+
+  const move=(i,dir)=>{
+    if(submitted)return;
+    const ni=i+dir;
+    if(ni<0||ni>=order.length)return;
+    const nOrd=[...order];
+    [nOrd[i],nOrd[ni]]=[nOrd[ni],nOrd[i]];
+    setOrder(nOrd);
+  };
+
+  const submit=()=>{
+    let p=0;
+    order.forEach((z,i)=>{if(real[i]&&z.id===real[i].id)p+=2;});
+    setPts(p);setScore(s=>s+p);setSubmitted(true);
+  };
+
+  const next=()=>{
+    if(round+1>=ROUNDS){onFinish(score+pts,maxScore,[]);}
+    else{
+      const nr=round+1;
+      setRound(nr);setOrder(shuffle(allSets[nr]));setSubmitted(false);setPts(0);
+    }
+  };
+
+  const lc=lv=>LVL[lv];
+
+  return(
+    <div className="p-5">
+      <div className="flex justify-between items-center mb-3">
+        <span className="text-xs font-bold text-slate-400">Manche {round+1}/{ROUNDS}</span>
+        <span className="text-xs font-bold text-indigo-600">{score} pts</span>
+      </div>
+      <div className="h-1.5 bg-slate-100 rounded-full mb-4">
+        <div className="h-full bg-gradient-to-r from-indigo-500 to-violet-400 rounded-full transition-all" style={{width:`${(round/ROUNDS)*100}%`}}/>
+      </div>
+
+      {!submitted?(
+        <div>
+          <p className="text-center text-sm text-slate-600 mb-1 font-semibold">📊 Classez ces 5 zoos du meilleur au moins bon score !</p>
+          <p className="text-center text-xs text-slate-400 mb-4">Utilisez les flèches ↑ ↓ pour réordonner</p>
+          <div className="space-y-2 mb-5">
+            {order.map((z,i)=>(
+              <div key={z.id} className="flex items-center gap-3 bg-white border-2 border-slate-200 rounded-2xl px-4 py-3">
+                <span className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold text-slate-500 flex-shrink-0">{i+1}</span>
+                <span className="text-lg flex-shrink-0">{z.flag}</span>
+                <span className="flex-1 text-sm font-semibold text-slate-800 truncate">{z.short}</span>
+                <div className="flex flex-col gap-0.5 flex-shrink-0">
+                  <button onClick={()=>move(i,-1)} disabled={i===0} className="w-6 h-5 flex items-center justify-center text-slate-400 hover:text-indigo-600 disabled:opacity-20 text-xs">▲</button>
+                  <button onClick={()=>move(i,1)} disabled={i===order.length-1} className="w-6 h-5 flex items-center justify-center text-slate-400 hover:text-indigo-600 disabled:opacity-20 text-xs">▼</button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <button onClick={submit} className="w-full bg-gradient-to-r from-indigo-600 to-violet-500 text-white py-3 rounded-2xl font-bold text-sm hover:opacity-90">
+            Valider mon classement ✓
+          </button>
+        </div>
+      ):(
+        <div>
+          <div className="text-center mb-4">
+            <div className={`font-display text-3xl font-bold ${pts>0?'text-indigo-600':'text-slate-400'}`}>+{pts} pts</div>
+            <p className="text-xs text-slate-500">{pts/2} zoo{pts/2>1?'s':''} bien placé{pts/2>1?'s':''} sur {N}</p>
+          </div>
+          <div className="space-y-2 mb-5">
+            {real.map((z,i)=>{
+              const userPos=order.findIndex(u=>u.id===z.id);
+              const ok=userPos===i;
+              return(
+                <div key={z.id} className={`flex items-center gap-3 rounded-2xl px-4 py-2.5 border ${ok?'bg-emerald-50 border-emerald-200':'bg-red-50 border-red-200'}`}>
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 ${ok?'bg-emerald-500':'bg-red-400'}`}>{i+1}</span>
+                  <span className="text-base flex-shrink-0">{z.flag}</span>
+                  <span className="flex-1 text-xs font-semibold text-slate-700 truncate">{z.short}</span>
+                  <span className={`text-xs font-bold ${ok?'text-emerald-600':'text-slate-400'}`}>{z.globalPct}%</span>
+                  <span className="text-xs">{ok?'✓':'Tu : #'+(userPos+1)}</span>
+                </div>
+              );
+            })}
+          </div>
+          <button onClick={next} className="w-full bg-gradient-to-r from-indigo-600 to-violet-500 text-white py-3 rounded-2xl font-bold text-sm hover:opacity-90">
+            {round+1<ROUNDS?'Manche suivante →':'Résultats 🏆'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const LeaderboardView=({entries,loading,online,onSync})=>{
+  const [gameF,setGameF]=useState('all');
+  const games=['all','quiz','indices','vraifaux','ordre'];
+  const gameLabels={all:'Tous',quiz:'Quiz',indices:'Qui suis-je',vraifaux:'Vrai/Faux',ordre:'Classement'};
+  const gameEmoji={all:'🏆',quiz:'🎯',indices:'🔍',vraifaux:'⚡',ordre:'📊'};
+  const filtered=entries.filter(e=>gameF==='all'||e.game===gameF);
+  const top=filtered.slice(0,20);
+
+  return(
+    <div className="p-5">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-display text-lg text-slate-800">🏆 Classement</h3>
+        <div className="flex items-center gap-2">
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${online?'bg-emerald-100 text-emerald-700':'bg-slate-100 text-slate-500'}`}>
+            {online?'🟢 En ligne':'💾 Local'}
+          </span>
+          <button onClick={onSync} className="text-xs text-violet-600 hover:underline">
+            {loading?'..':'↻'}
+          </button>
+        </div>
+      </div>
+
+      {!JSONBIN_KEY&&(
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 text-xs text-amber-700 leading-relaxed">
+          <strong>💡 Classement local uniquement.</strong> Pour activer la sync entre tous les joueurs, configurez JSONBin.io (voir commentaires dans le code).
+        </div>
+      )}
+
+      <div className="flex gap-1.5 mb-4 flex-wrap">
+        {games.map(g=>(
+          <button key={g} onClick={()=>setGameF(g)}
+            className={`px-2.5 py-1 rounded-full text-[10px] font-bold border transition-all ${gameF===g?'bg-violet-600 text-white border-transparent':'bg-white text-slate-500 border-slate-200 hover:border-violet-300'}`}>
+            {gameEmoji[g]} {gameLabels[g]}
+          </button>
+        ))}
+      </div>
+
+      {top.length===0?(
+        <div className="text-center py-10 text-slate-400">
+          <div className="text-4xl mb-2">🎮</div>
+          <p className="text-sm">Aucun score encore.<br/>Jouez pour apparaître ici !</p>
+        </div>
+      ):(
+        <div className="space-y-2">
+          {top.map((e,i)=>{
+            const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+            return(
+              <div key={i} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl ${i<3?'bg-amber-50 border border-amber-200':'bg-slate-50 border border-slate-100'}`}>
+                <span className="w-7 text-center text-sm font-bold text-slate-400">{medal||`#${i+1}`}</span>
+                <div className="flex-1 min-w-0">
+                  <span className="font-bold text-sm text-slate-800">{e.name}</span>
+                  <span className="text-[10px] text-slate-400 ml-2">{gameEmoji[e.game]||'🎮'} {gameLabels[e.game]||e.game}</span>
+                </div>
+                <span className="font-display font-bold text-slate-700">{e.pct}%</span>
+                <span className="text-[10px] text-slate-400">{e.date}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════
+   GAME CENTER HUB
+═══════════════════════════════════════════════════════════ */
+const GAME_LIST=[
+  {id:'quiz',    emoji:'🎯',name:'Quiz Culture Zoo',    color:'from-violet-600 to-fuchsia-500',desc:'10 QCM sur les 12 zoos du panel. Culture générale & anecdotes.',          max:30,time:'~3 min'},
+  {id:'indices', emoji:'🔍',name:'Qui suis-je ?',       color:'from-orange-500 to-amber-400', desc:"6 zoos mystère. Révélez les indices un par un : moins d'indices = plus de points !", max:30,time:'~5 min'},
+  {id:'vraifaux',emoji:'⚡',name:'Speed Vrai / Faux',   color:'from-cyan-500 to-blue-500',    desc:'15 affirmations en 45 secondes. Vrai ou Faux ? Vite !',                   max:30,time:'45 sec'},
+  {id:'ordre',   emoji:'📊',name:'Puzzle Classement',   color:'from-indigo-600 to-violet-500', desc:'Remettez 5 zoos dans le bon ordre de score. 3 manches, flèches ↑↓.',      max:30,time:'~4 min'},
+];
+
+const GameCenter=({open,onClose})=>{
+  const [screen,setScreen]=useState('hub');
+  const [activeGame,setActiveGame]=useState(null);
+  const [result,setResult]=useState(null);
+  const lb=useLeaderboard();
+
+  const startGame=(id)=>{setActiveGame(id);setScreen('playing');};
+  const finishGame=(score,max,hist)=>{setResult({score,max,hist});setScreen('score');};
+  const saveScore=async(name,pct)=>{
+    await lb.submit({name,game:activeGame,pct,score:result.score,date:new Date().toLocaleDateString('fr-FR')});
+    setScreen('lb');
+  };
+  const goHub=()=>{setScreen('hub');setActiveGame(null);setResult(null);};
+
+  if(!open)return null;
+  const curGame=GAME_LIST.find(g=>g.id===activeGame);
+  const headerGrad=curGame?.color||'from-violet-600 to-fuchsia-500';
+
+  return(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm" onClick={e=>{if(e.target===e.currentTarget){goHub();onClose();}}}>
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[92vh] flex flex-col overflow-hidden scale-in">
+        <div className={`bg-gradient-to-r ${headerGrad} p-5 flex-shrink-0`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {screen!=='hub'&&(
+                <button onClick={screen==='lb'?()=>setScreen('hub'):goHub}
+                  className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-colors">
+                  <i className="fa-solid fa-chevron-left text-xs"/>
+                </button>
+              )}
+              <div>
+                <h2 className="font-display text-lg font-bold text-white leading-tight">
+                  {screen==='hub'?'🎮 Game Center'
+                   :screen==='lb'?'🏆 Classement'
+                   :screen==='score'?'📊 Résultats'
+                   :curGame?.emoji+' '+curGame?.name}
+                </h2>
+                <p className="text-white/70 text-xs">Label Voix Animale</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={()=>setScreen('lb')} className="text-xs font-bold bg-white/20 hover:bg-white/30 text-white px-2.5 py-1.5 rounded-full transition-colors">🏆</button>
+              <button onClick={()=>{goHub();onClose();}} className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-colors">
+                <i className="fa-solid fa-xmark text-sm"/>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto custom-scroll bg-slate-50">
+          {screen==='hub'&&(
+            <div className="p-5 space-y-3">
+              <p className="text-xs text-slate-500 text-center mb-4">4 jeux pour tester vos connaissances sur le bien-être animal 🐾</p>
+              {GAME_LIST.map(g=>(
+                <button key={g.id} onClick={()=>startGame(g.id)}
+                  className={`w-full text-left rounded-2xl overflow-hidden bg-gradient-to-r ${g.color} hover:scale-[1.01] transition-all shadow-md`}>
+                  <div className="p-4 flex items-center gap-4">
+                    <span className="text-4xl flex-shrink-0">{g.emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-white text-sm">{g.name}</div>
+                      <p className="text-white/80 text-xs leading-relaxed mt-0.5 line-clamp-2">{g.desc}</p>
+                    </div>
+                    <div className="flex-shrink-0 text-right">
+                      <div className="text-white font-bold text-xs">Max {g.max} pts</div>
+                      <div className="text-white/70 text-[10px]">{g.time}</div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+              <button onClick={()=>setScreen('lb')}
+                className="w-full bg-white border-2 border-amber-300 text-amber-700 py-3 rounded-2xl font-bold text-sm hover:bg-amber-50 transition-colors flex items-center justify-center gap-2">
+                🏆 Voir le classement
+                {lb.online&&<span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold">🟢 En ligne</span>}
+                {!lb.online&&lb.entries.length>0&&<span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">{lb.entries.length} scores</span>}
+              </button>
+            </div>
+          )}
+          {screen==='playing'&&activeGame==='quiz'    &&<GameQuiz     onFinish={finishGame}/>}
+          {screen==='playing'&&activeGame==='indices' &&<GameIndices  onFinish={finishGame}/>}
+          {screen==='playing'&&activeGame==='vraifaux'&&<GameVraiFaux onFinish={finishGame}/>}
+          {screen==='playing'&&activeGame==='ordre'   &&<GameOrdre    onFinish={finishGame}/>}
+          {screen==='score'&&result&&(
+            <ScoreEntry score={result.score} maxScore={result.max}
+              game={curGame?.name||activeGame}
+              onSubmit={saveScore} onSkip={()=>setScreen('hub')}/>
+          )}
+          {screen==='lb'&&<LeaderboardView entries={lb.entries} loading={lb.loading} online={lb.online} onSync={lb.sync}/>}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════
    APP
 ═══════════════════════════════════════════════════════════ */
 const App=()=>{
   const [tab,setTab]=useState('home');
   const [zoo,setZoo]=useState(null);
+  const [gameOpen,setGameOpen]=useState(false);
   useEffect(()=>{
-    const h=e=>setTab('project');
+    const h=()=>setTab('project');
     document.addEventListener('gotoProject',h);
     return()=>document.removeEventListener('gotoProject',h);
   },[]);
+  const openGames=()=>setGameOpen(true);
   return(
     <div className="min-h-screen flex flex-col">
-      <Nav tab={tab} setTab={setTab}/>
+      <Nav tab={tab} setTab={setTab} openQuiz={openGames}/>
       <main className="flex-grow">
-        {tab==='home'    && <HomePage    setTab={setTab} openZoo={setZoo}/>}
+        {tab==='home'    && <HomePage    setTab={setTab} openZoo={setZoo} openQuiz={openGames}/>}
         {tab==='map'     && <MapPage     openZoo={setZoo}/>}
         {tab==='ranking' && <RankingPage openZoo={setZoo}/>}
         {tab==='project' && <ProjectPage/>}
@@ -1234,13 +1919,13 @@ const App=()=>{
             </div>
             <div className="flex flex-wrap gap-3 text-xs">
               <span className="flex items-center gap-1.5 bg-slate-800 px-3 py-1.5 rounded-full">
-                <i className="fa-solid fa-shield text-emerald-500"/>Aucun cookie
+                <i className="fa-solid fa-lock text-emerald-500"/>Aucun cookie
               </span>
               <span className="flex items-center gap-1.5 bg-slate-800 px-3 py-1.5 rounded-full">
-                <i className="fa-solid fa-eye-slash text-emerald-500"/>Aucune donnée collectée
+                <i className="fa-solid fa-eye text-emerald-500"/>Aucune donnée collectée
               </span>
               <span className="flex items-center gap-1.5 bg-slate-800 px-3 py-1.5 rounded-full">
-                <i className="fa-solid fa-graduation-cap text-emerald-500"/>Usage académique uniquement
+                <i className="fa-solid fa-graduation-cap text-emerald-500"/>Usage académique
               </span>
             </div>
           </div>
@@ -1253,6 +1938,7 @@ const App=()=>{
         </div>
       </footer>
       <Modal zoo={zoo} onClose={()=>setZoo(null)}/>
+      <GameCenter open={gameOpen} onClose={()=>setGameOpen(false)}/>
     </div>
   );
 };
